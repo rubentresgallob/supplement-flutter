@@ -1,0 +1,161 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:logger/logger.dart';
+import '../constants/api_constants.dart';
+import '../../data/datasources/local_storage_datasource.dart';
+import '../errors/exceptions.dart';
+
+/// Cliente API configurado con Dio
+class ApiClient {
+  late final Dio _dio;
+  final LocalStorageDataSource _localStorage;
+  final Logger _logger = Logger(
+    level: kReleaseMode ? Level.off : Level.debug,
+  );
+
+  ApiClient(this._localStorage) {
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: ApiConstants.baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ),
+    );
+    
+    _setupInterceptors();
+  }
+  
+  /// Configura los interceptores de Dio
+  void _setupInterceptors() {
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          // Agregar token JWT si existe
+          final token = await _localStorage.getToken();
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          
+          _logger.d('➡️ ${options.method} ${options.path}');
+          _logger.d('Headers: ${options.headers}');
+          if (options.data != null) {
+            _logger.d('Body: ${options.data}');
+          }
+          
+          handler.next(options);
+        },
+        onResponse: (response, handler) {
+          _logger.d('⬅️ ${response.statusCode} ${response.requestOptions.path}');
+          _logger.d('Response: ${response.data}');
+          handler.next(response);
+        },
+        onError: (error, handler) {
+          _logger.e('❌ Error: ${error.message}');
+          _logger.e('Response: ${error.response?.data}');
+          handler.next(error);
+        },
+      ),
+    );
+  }
+  
+  /// Realiza una petición GET
+  Future<Response> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    try {
+      final response = await _dio.get(
+        path,
+        queryParameters: queryParameters,
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+  
+  /// Realiza una petición POST
+  Future<Response> post(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    try {
+      final response = await _dio.post(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+  
+  /// Realiza una petición PUT
+  Future<Response> put(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    try {
+      final response = await _dio.put(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+  
+  /// Realiza una petición DELETE
+  Future<Response> delete(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    try {
+      final response = await _dio.delete(
+        path,
+        queryParameters: queryParameters,
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+  
+  /// Maneja los errores de Dio y los convierte en excepciones personalizadas
+  Exception _handleError(DioException error) {
+    if (error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.receiveTimeout ||
+        error.type == DioExceptionType.sendTimeout) {
+      return NetworkException('Tiempo de espera agotado. Verifica tu conexión a internet.');
+    }
+    
+    if (error.type == DioExceptionType.connectionError) {
+      return NetworkException('No se pudo conectar al servidor. Verifica tu conexión a internet.');
+    }
+    
+    final statusCode = error.response?.statusCode;
+    final message = error.response?.data['message'] ?? 'Error desconocido';
+    
+    switch (statusCode) {
+      case 400:
+        return ValidationException(message);
+      case 401:
+        return AuthException('Sesión expirada. Por favor, inicia sesión nuevamente.');
+      case 404:
+        return NotFoundException(message);
+      case 500:
+        return ServerException('Error del servidor. Inténtalo de nuevo más tarde.');
+      default:
+        return ServerException(message);
+    }
+  }
+}
