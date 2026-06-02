@@ -85,7 +85,10 @@ class SupplementsRemoteDataSource {
 
   /// Obtiene todos los suplementos del catálogo global
   Future<List<SupplementDatabaseModel>> getSupplementsDatabase() async {
-    final response = await _apiClient.get(ApiConstants.supplementsDatabase);
+    final response = await _apiClient.get(
+      ApiConstants.supplementsDatabase,
+      queryParameters: {'limit': 100},
+    );
     final List<dynamic> data = (response.data['data'] ?? response.data) as List<dynamic>;
     return data.map((json) => SupplementDatabaseModel.fromJson(json)).toList();
   }

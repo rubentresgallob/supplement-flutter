@@ -37,4 +37,19 @@ class FriendsRemoteDataSource {
   Future<void> sendMotivation(int friendId) async {
     await _apiClient.post('/friends/$friendId/motivate');
   }
+
+  Future<Map<String, dynamic>> getLeaderboardStreaks() async {
+    final response = await _apiClient.get('/leaderboard/friends');
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getLeaderboardAdherence() async {
+    final response = await _apiClient.get('/leaderboard/adherence');
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getFriendProgress(int friendId) async {
+    final response = await _apiClient.get('/friends/$friendId/progress');
+    return response.data as Map<String, dynamic>;
+  }
 }

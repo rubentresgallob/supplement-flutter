@@ -32,6 +32,12 @@ class AppColors {
   static const Color primary   = Color(0xFFFF6B35);
   static const Color gold      = Color(0xFFFAB437);
 
+  // Neon / glow extras
+  static const Color neonOrange = Color(0xFFFF8C42);
+  static const Color neonGold   = Color(0xFFFFD166);
+  static const Color deepAmber  = Color(0xFFE07B00);
+  static const Color fireRed    = Color(0xFFFF3D00);
+
   // Semantic
   static const Color success   = Color(0xFF4ADE80);
   static const Color error     = Color(0xFFFF4444);
@@ -45,6 +51,9 @@ class AppColors {
   static const List<Color> brandGradient = [primary, gold];
   static const List<Color> bgGradient    = [Color(0xFF070B18), Color(0xFF0D1526)];
   static const List<Color> cardGradient  = [Color(0xFF131C2E), Color(0xFF0F1623)];
+  static const List<Color> fireGradient  = [fireRed, primary, gold];
+  static const List<Color> neonGradient  = [neonOrange, neonGold];
+  static const List<Color> glowGradient  = [Color(0x44FF6B35), Color(0x00FF6B35)];
 }
 
 class AppGradients {
@@ -64,5 +73,22 @@ class AppGradients {
     colors: AppColors.cardGradient,
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
+  );
+
+  static const fire = LinearGradient(
+    colors: AppColors.fireGradient,
+    begin: Alignment.bottomCenter,
+    end: Alignment.topCenter,
+  );
+
+  static const neon = LinearGradient(
+    colors: AppColors.neonGradient,
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+
+  static const radialGlow = RadialGradient(
+    colors: [Color(0x55FF6B35), Color(0x00070B18)],
+    radius: 0.8,
   );
 }

@@ -24,18 +24,29 @@ class NotificationService {
         IOSFlutterLocalNotificationsPlugin>();
 
     await android?.requestNotificationsPermission();
-    await android?.requestExactAlarmsPermission();
+    // Solo pedimos permisos de alarma exacta si el dispositivo los soporta
+    // (Android 12+). En versiones anteriores no es necesario.
+    final canExact = await android?.canScheduleExactNotifications() ?? false;
+    if (!canExact) {
+      await android?.requestExactAlarmsPermission();
+    }
     await ios?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
   // Programa una notificación diaria a la hora indicada.
-  // Si el suplemento ya fue completado hoy, llama a cancelReminder en su lugar.
   static Future<void> scheduleReminder({
     required int id,
     required String supplementName,
     required TimeOfDay time,
   }) async {
     await _plugin.cancel(id);
+
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    final canExact = await android?.canScheduleExactNotifications() ?? false;
+    final scheduleMode = canExact
+        ? AndroidScheduleMode.exactAllowWhileIdle
+        : AndroidScheduleMode.inexactAllowWhileIdle;
 
     final now = tz.TZDateTime.now(tz.local);
     var scheduled = tz.TZDateTime(
@@ -52,7 +63,7 @@ class NotificationService {
 
     await _plugin.zonedSchedule(
       id,
-      'Recordatorio: $supplementName 💊',
+      'Recordatorio: $supplementName',
       'No olvides registrar tu toma de hoy',
       scheduled,
       const NotificationDetails(
@@ -69,7 +80,7 @@ class NotificationService {
           presentSound: true,
         ),
       ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: scheduleMode,
       matchDateTimeComponents: DateTimeComponents.time,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
@@ -83,7 +94,7 @@ class NotificationService {
   static Future<void> showMotivationSent(String friendName) async {
     await _plugin.show(
       99998,
-      '¡Ánimos enviados! 💪',
+      '¡Ánimos enviados!',
       'Has motivado a $friendName. ¡Seguid así!',
       const NotificationDetails(
         android: AndroidNotificationDetails(

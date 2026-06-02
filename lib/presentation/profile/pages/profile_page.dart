@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_constants.dart';
@@ -15,13 +16,76 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage>
+    with TickerProviderStateMixin {
   String _bio = '';
+
+  late final AnimationController _ringCtrl;
+  late final AnimationController _entranceCtrl;
+  late final Animation<double> _headerOpacity;
+  late final Animation<Offset> _headerSlide;
+  late final Animation<double> _statsOpacity;
+  late final Animation<Offset> _statsSlide;
+  late final Animation<double> _settingsOpacity;
+  late final Animation<Offset> _settingsSlide;
 
   @override
   void initState() {
     super.initState();
     _bio = context.read<LocalStorageDataSource>().getBio();
+
+    _ringCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat();
+
+    _entranceCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..forward();
+
+    _headerOpacity = CurvedAnimation(
+      parent: _entranceCtrl,
+      curve: const Interval(0.0, 0.5),
+    );
+    _headerSlide = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _entranceCtrl,
+      curve: const Interval(0.0, 0.5, curve: Curves.easeOutCubic),
+    ));
+
+    _statsOpacity = CurvedAnimation(
+      parent: _entranceCtrl,
+      curve: const Interval(0.25, 0.65),
+    );
+    _statsSlide = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _entranceCtrl,
+      curve: const Interval(0.25, 0.65, curve: Curves.easeOutCubic),
+    ));
+
+    _settingsOpacity = CurvedAnimation(
+      parent: _entranceCtrl,
+      curve: const Interval(0.5, 0.9),
+    );
+    _settingsSlide = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _entranceCtrl,
+      curve: const Interval(0.5, 0.9, curve: Curves.easeOutCubic),
+    ));
+  }
+
+  @override
+  void dispose() {
+    _ringCtrl.dispose();
+    _entranceCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _editBio() async {
@@ -40,11 +104,17 @@ class _ProfilePageState extends State<ProfilePage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Tu descripción',
+              ShaderMask(
+                shaderCallback: (b) => AppGradients.brand.createShader(b),
+                child: const Text(
+                  'Tu descripción',
                   style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800)),
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
               TextField(
                 controller: ctrl,
@@ -123,121 +193,141 @@ class _ProfilePageState extends State<ProfilePage> {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Mi cuenta',
-                        style: TextStyle(
-                            color: AppColors.textSecondary, fontSize: 14)),
-                    SizedBox(height: 2),
-                    Text('Perfil',
-                        style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5)),
-                  ],
+            SliverToBoxAdapter(
+              child: FadeTransition(
+                opacity: _headerOpacity,
+                child: SlideTransition(
+                  position: _headerSlide,
+                  child: const Padding(
+                    padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Mi cuenta',
+                            style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 14)),
+                        SizedBox(height: 2),
+                        Text('Perfil',
+                            style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5)),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
 
-            // Avatar + info card
+            // Avatar + info
             SliverToBoxAdapter(
-              child: BlocBuilder<AuthBloc, AuthState>(
-                builder: (context, state) {
-                  if (state is! AuthAuthenticatedState) return const SizedBox();
-                  final user = state.user;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        gradient: AppGradients.card,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              gradient: AppGradients.brand,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withValues(alpha: 0.4),
-                                  blurRadius: 20,
-                                  spreadRadius: 2,
-                                )
-                              ],
+              child: FadeTransition(
+                opacity: _headerOpacity,
+                child: SlideTransition(
+                  position: _headerSlide,
+                  child: BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, state) {
+                      if (state is! AuthAuthenticatedState) {
+                        return const SizedBox();
+                      }
+                      final user = state.user;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            gradient: AppGradients.card,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.15),
                             ),
-                            child: Center(
-                              child: Text(user.username[0].toUpperCase(),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.06),
+                                blurRadius: 20,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              // Rotating ring avatar
+                              _AnimatedAvatarRing(
+                                letter: user.username[0].toUpperCase(),
+                                ringCtrl: _ringCtrl,
+                              ),
+                              const SizedBox(height: 14),
+                              ShaderMask(
+                                shaderCallback: (b) =>
+                                    AppGradients.brand.createShader(b),
+                                child: Text(
+                                  user.username,
                                   style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 34,
-                                      fontWeight: FontWeight.w800)),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(user.username,
-                              style: const TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.3)),
-                          const SizedBox(height: 4),
-                          Text(user.email,
-                              style: const TextStyle(
-                                  color: AppColors.textSecondary, fontSize: 13)),
-                          const SizedBox(height: 4),
-                          Text('Miembro desde ${_formatDate(user.createdAt)}',
-                              style: const TextStyle(
-                                  color: AppColors.textMuted, fontSize: 12)),
-                          const SizedBox(height: 16),
-                          GestureDetector(
-                            onTap: _editBio,
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: AppColors.bgCardElevated,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      _bio.isEmpty
-                                          ? 'Añade una descripción...'
-                                          : _bio,
-                                      style: TextStyle(
-                                        color: _bio.isEmpty
-                                            ? AppColors.textMuted
-                                            : AppColors.textSecondary,
-                                        fontSize: 13,
-                                        height: 1.5,
-                                      ),
-                                    ),
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.3,
                                   ),
-                                  const SizedBox(width: 8),
-                                  const Icon(Icons.edit_rounded,
-                                      size: 14, color: AppColors.textMuted),
-                                ],
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 4),
+                              Text(user.email,
+                                  style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 13)),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Miembro desde ${_formatDate(user.createdAt)}',
+                                style: const TextStyle(
+                                    color: AppColors.textMuted, fontSize: 12),
+                              ),
+                              const SizedBox(height: 16),
+                              GestureDetector(
+                                onTap: _editBio,
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.bgCardElevated,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border:
+                                        Border.all(color: AppColors.border),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          _bio.isEmpty
+                                              ? 'Añade una descripción...'
+                                              : _bio,
+                                          style: TextStyle(
+                                            color: _bio.isEmpty
+                                                ? AppColors.textMuted
+                                                : AppColors.textSecondary,
+                                            fontSize: 13,
+                                            height: 1.5,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Icon(Icons.edit_rounded,
+                                          size: 14,
+                                          color: AppColors.textMuted),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
             ),
 
@@ -245,60 +335,73 @@ class _ProfilePageState extends State<ProfilePage> {
 
             // Stats
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 12),
-                      child: Text('Mis estadísticas',
-                          style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5)),
+              child: FadeTransition(
+                opacity: _statsOpacity,
+                child: SlideTransition(
+                  position: _statsSlide,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 12),
+                          child: Text('Mis estadísticas',
+                              style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5)),
+                        ),
+                        BlocBuilder<HomeBloc, HomeState>(
+                          builder: (context, homeState) {
+                            int supplementCount = 0;
+                            int streakDays = 0;
+                            int longestStreak = 0;
+                            if (homeState is HomeLoadedState) {
+                              supplementCount =
+                                  homeState.supplements.length;
+                              streakDays =
+                                  homeState.userStreak.currentStreak;
+                              longestStreak =
+                                  homeState.userStreak.longestStreak;
+                            }
+                            return Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _BentoStatCard(
+                                        label: 'Racha actual',
+                                        value: streakDays,
+                                        unit: 'días',
+                                        labelColor: AppColors.gold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: _BentoStatCard(
+                                        label: 'Mejor racha',
+                                        value: longestStreak,
+                                        unit: 'días',
+                                        labelColor: AppColors.textMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                _BentoStatCardWide(
+                                  label: 'Suplementos activos',
+                                  value: supplementCount,
+                                  unit: 'activos',
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
                     ),
-                    BlocBuilder<HomeBloc, HomeState>(
-                      builder: (context, homeState) {
-                        int supplementCount = 0;
-                        int streakDays = 0;
-                        int longestStreak = 0;
-                        if (homeState is HomeLoadedState) {
-                          supplementCount = homeState.supplements.length;
-                          streakDays = homeState.userStreak.currentStreak;
-                          longestStreak = homeState.userStreak.longestStreak;
-                        }
-                        return Row(
-                          children: [
-                            Expanded(
-                                child: _StatCard(
-                              icon: Icons.medication_rounded,
-                              value: '$supplementCount',
-                              label: 'Suplementos',
-                              color: AppColors.primary,
-                            )),
-                            const SizedBox(width: 10),
-                            Expanded(
-                                child: _StatCard(
-                              icon: Icons.local_fire_department_rounded,
-                              value: '$streakDays',
-                              label: 'Racha actual',
-                              color: AppColors.gold,
-                            )),
-                            const SizedBox(width: 10),
-                            Expanded(
-                                child: _StatCard(
-                              icon: Icons.emoji_events_rounded,
-                              value: '$longestStreak',
-                              label: 'Mejor racha',
-                              color: AppColors.success,
-                            )),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -307,49 +410,59 @@ class _ProfilePageState extends State<ProfilePage> {
 
             // Ajustes
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 12),
-                      child: Text('Ajustes',
-                          style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5)),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.bgCard,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Column(
-                        children: [
-                          _SettingsTile(
-                            icon: Icons.notifications_outlined,
-                            label: 'Notificaciones',
-                            trailing: const Icon(Icons.chevron_right_rounded,
-                                color: AppColors.textMuted),
-                            onTap: () {},
+              child: FadeTransition(
+                opacity: _settingsOpacity,
+                child: SlideTransition(
+                  position: _settingsSlide,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 12),
+                          child: Text('Ajustes',
+                              style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5)),
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.bgCard,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.border),
                           ),
-                          const Divider(
-                              height: 1, color: AppColors.border, indent: 52),
-                          _SettingsTile(
-                            icon: Icons.info_outline_rounded,
-                            label: 'Versión de la app',
-                            trailing: const Text('1.0.0',
-                                style: TextStyle(
-                                    color: AppColors.textMuted, fontSize: 13)),
-                            onTap: () {},
+                          child: Column(
+                            children: [
+                              _SettingsTile(
+                                icon: Icons.notifications_outlined,
+                                label: 'Notificaciones',
+                                trailing: const Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: AppColors.textMuted),
+                                onTap: () {},
+                              ),
+                              const Divider(
+                                  height: 1,
+                                  color: AppColors.border,
+                                  indent: 52),
+                              _SettingsTile(
+                                icon: Icons.info_outline_rounded,
+                                label: 'Versión de la app',
+                                trailing: const Text('1.0.0',
+                                    style: TextStyle(
+                                        color: AppColors.textMuted,
+                                        fontSize: 13)),
+                                onTap: () {},
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -358,31 +471,37 @@ class _ProfilePageState extends State<ProfilePage> {
 
             // Cerrar sesión
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: GestureDetector(
-                  onTap: () =>
-                      context.read<AuthBloc>().add(AuthLogoutEvent()),
-                  child: Container(
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: AppColors.error.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                          color: AppColors.error.withValues(alpha: 0.3)),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.logout_rounded,
-                            color: AppColors.error, size: 20),
-                        SizedBox(width: 10),
-                        Text('Cerrar sesión',
-                            style: TextStyle(
-                                color: AppColors.error,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15)),
-                      ],
+              child: FadeTransition(
+                opacity: _settingsOpacity,
+                child: SlideTransition(
+                  position: _settingsSlide,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: GestureDetector(
+                      onTap: () =>
+                          context.read<AuthBloc>().add(AuthLogoutEvent()),
+                      child: Container(
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                              color: AppColors.error.withValues(alpha: 0.3)),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.logout_rounded,
+                                color: AppColors.error, size: 20),
+                            SizedBox(width: 10),
+                            Text('Cerrar sesión',
+                                style: TextStyle(
+                                    color: AppColors.error,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15)),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -397,21 +516,94 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String value;
+class _AnimatedAvatarRing extends StatelessWidget {
+  final String letter;
+  final AnimationController ringCtrl;
+
+  const _AnimatedAvatarRing({
+    required this.letter,
+    required this.ringCtrl,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: ringCtrl,
+      builder: (_, child) => Stack(
+        alignment: Alignment.center,
+        children: [
+          // Rotating gradient ring
+          Transform.rotate(
+            angle: ringCtrl.value * 2 * math.pi,
+            child: Container(
+              width: 94,
+              height: 94,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: SweepGradient(
+                  colors: [
+                    AppColors.primary,
+                    AppColors.gold,
+                    Color(0x00FF6B35),
+                    AppColors.primary,
+                  ],
+                  stops: [0.0, 0.35, 0.65, 1.0],
+                ),
+              ),
+            ),
+          ),
+          // Gap ring
+          Container(
+            width: 86,
+            height: 86,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.bgCard,
+            ),
+          ),
+          // Avatar
+          child!,
+        ],
+      ),
+      child: Container(
+        width: 80,
+        height: 80,
+        decoration: const BoxDecoration(
+          gradient: AppGradients.brand,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: Text(
+            letter,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 34,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BentoStatCard extends StatelessWidget {
   final String label;
-  final Color color;
-  const _StatCard(
-      {required this.icon,
-      required this.value,
-      required this.label,
-      required this.color});
+  final int value;
+  final String unit;
+  final Color labelColor;
+
+  const _BentoStatCard({
+    required this.label,
+    required this.value,
+    required this.unit,
+    required this.labelColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
         borderRadius: BorderRadius.circular(16),
@@ -420,23 +612,124 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              color: labelColor,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.12,
             ),
-            child: Icon(icon, color: color, size: 18),
           ),
           const SizedBox(height: 10),
-          Text(value,
-              style: TextStyle(
-                  color: color, fontSize: 24, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 2),
-          Text(label,
-              style: const TextStyle(
-                  color: AppColors.textMuted, fontSize: 11)),
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: value.toDouble()),
+            duration: const Duration(milliseconds: 900),
+            curve: Curves.easeOutCubic,
+            builder: (_, v, __) => RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: '${v.round()}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 36,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'Syne',
+                      height: 1,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' $unit',
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BentoStatCardWide extends StatelessWidget {
+  final String label;
+  final int value;
+  final String unit;
+
+  const _BentoStatCardWide({
+    required this.label,
+    required this.value,
+    required this.unit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.bgCard,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label.toUpperCase(),
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.12,
+                ),
+              ),
+              const SizedBox(height: 4),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: value.toDouble()),
+                duration: const Duration(milliseconds: 900),
+                curve: Curves.easeOutCubic,
+                builder: (_, v, __) => RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${v.round()}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 36,
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'Syne',
+                          height: 1,
+                        ),
+                      ),
+                      TextSpan(
+                        text: ' $unit',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Icon(
+            Icons.medication_rounded,
+            size: 32,
+            color: AppColors.primary.withValues(alpha: 0.3),
+          ),
         ],
       ),
     );
@@ -448,11 +741,13 @@ class _SettingsTile extends StatelessWidget {
   final String label;
   final Widget trailing;
   final VoidCallback onTap;
-  const _SettingsTile(
-      {required this.icon,
-      required this.label,
-      required this.trailing,
-      required this.onTap});
+
+  const _SettingsTile({
+    required this.icon,
+    required this.label,
+    required this.trailing,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -471,7 +766,8 @@ class _SettingsTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.border),
               ),
-              child: Icon(icon, color: AppColors.textSecondary, size: 18),
+              child:
+                  Icon(icon, color: AppColors.textSecondary, size: 18),
             ),
             const SizedBox(width: 14),
             Expanded(

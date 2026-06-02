@@ -34,3 +34,13 @@ class HomeMarkAllIntakesTakenEvent extends HomeEvent {
   @override
   List<Object> get props => [supplementId, remaining];
 }
+
+/// Evento para eliminar un suplemento de la rutina
+class HomeDeleteSupplementEvent extends HomeEvent {
+  final String supplementId;
+
+  const HomeDeleteSupplementEvent(this.supplementId);
+
+  @override
+  List<Object> get props => [supplementId];
+}

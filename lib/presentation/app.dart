@@ -84,25 +84,40 @@ class SupplementTrackerApp extends StatelessWidget {
         onSurface: AppColors.textPrimary,
         onError: Colors.white,
       ),
-      textTheme: GoogleFonts.interTextTheme(base.textTheme).apply(
+      textTheme: GoogleFonts.syneTextTheme(base.textTheme).copyWith(
+        bodyLarge: GoogleFonts.outfit(
+            color: AppColors.textPrimary, fontSize: 16),
+        bodyMedium: GoogleFonts.outfit(
+            color: AppColors.textPrimary, fontSize: 14),
+        bodySmall: GoogleFonts.outfit(
+            color: AppColors.textSecondary, fontSize: 12),
+        labelLarge: GoogleFonts.outfit(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+            fontSize: 14),
+        labelMedium: GoogleFonts.outfit(
+            color: AppColors.textSecondary, fontSize: 12),
+        labelSmall: GoogleFonts.outfit(
+            color: AppColors.textMuted, fontSize: 11),
+      ).apply(
         bodyColor: AppColors.textPrimary,
         displayColor: AppColors.textPrimary,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.bgDeep,
         elevation: 0,
         scrolledUnderElevation: 0,
-        systemOverlayStyle: SystemUiOverlayStyle(
+        systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
         ),
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.syne(
           color: AppColors.textPrimary,
           fontSize: 18,
           fontWeight: FontWeight.w700,
           letterSpacing: -0.3,
         ),
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
       cardTheme: CardThemeData(
         color: AppColors.bgCard,
@@ -225,7 +240,7 @@ class _BrandLogo extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         gradient: AppGradients.brand,
-        borderRadius: BorderRadius.circular(size * 0.28),
+        shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.4),
@@ -234,7 +249,7 @@ class _BrandLogo extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(Icons.medication_rounded,
+      child: Icon(Icons.local_fire_department_rounded,
           color: Colors.white, size: size * 0.55),
     );
   }

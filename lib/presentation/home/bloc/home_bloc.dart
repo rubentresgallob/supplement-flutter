@@ -17,6 +17,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<HomeRefreshEvent>(_onRefresh);
     on<HomeMarkIntakeTakenEvent>(_onMarkIntakeTaken);
     on<HomeMarkAllIntakesTakenEvent>(_onMarkAllIntakesTaken);
+    on<HomeDeleteSupplementEvent>(_onDeleteSupplement);
   }
 
   Future<void> _onLoadSupplements(
@@ -100,6 +101,21 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       for (int i = 0; i < event.remaining; i++) {
         await _intakesDataSource.createIntake(userSupplementId: event.supplementId);
       }
+      add(HomeLoadSupplementsEvent());
+    } catch (e) {
+      emit(HomeErrorState(e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteSupplement(
+    HomeDeleteSupplementEvent event,
+    Emitter<HomeState> emit,
+  ) async {
+    try {
+      await _supplementsDataSource.deleteUserSupplement(event.supplementId);
+      await NotificationService.cancelReminder(
+        NotificationService.idFromSupplementId(event.supplementId),
+      );
       add(HomeLoadSupplementsEvent());
     } catch (e) {
       emit(HomeErrorState(e.toString()));

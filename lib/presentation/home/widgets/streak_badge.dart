@@ -2,143 +2,120 @@ import 'package:flutter/material.dart';
 import '../../../domain/entities/streak.dart';
 import '../../../core/constants/app_constants.dart';
 
-class StreakBadge extends StatelessWidget {
+/// Compact pill badge shown in the Home header top-right.
+class StreakBadge extends StatefulWidget {
   final Streak streak;
   const StreakBadge({super.key, required this.streak});
 
   @override
-  Widget build(BuildContext context) {
-    final current = streak.currentStreak;
-    final longest = streak.longestStreak;
+  State<StreakBadge> createState() => _StreakBadgeState();
+}
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1A1200), Color(0xFF0F1623)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+class _StreakBadgeState extends State<StreakBadge>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseCtrl;
+  late final Animation<double> _pulseScale;
+  late final Animation<double> _glowAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+    _pulseScale = Tween<double>(begin: 1.0, end: 1.06).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+    _glowAnim = CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut);
+  }
+
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final days = widget.streak.currentStreak;
+    final active = days > 0;
+
+    return AnimatedBuilder(
+      animation: _glowAnim,
+      builder: (_, child) => ScaleTransition(
+        scale: _pulseScale,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: active
+                  ? [
+                      AppColors.fireRed.withValues(alpha: 0.25),
+                      AppColors.gold.withValues(alpha: 0.18),
+                    ]
+                  : [
+                      AppColors.bgCardElevated,
+                      AppColors.bgCardElevated,
+                    ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: active
+                  ? AppColors.primary
+                      .withValues(alpha: 0.35 + 0.2 * _glowAnim.value)
+                  : AppColors.border,
+            ),
+            boxShadow: active
+                ? [
+                    BoxShadow(
+                      color: AppColors.primary
+                          .withValues(alpha: 0.1 + 0.15 * _glowAnim.value),
+                      blurRadius: 14 + 6 * _glowAnim.value,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : [],
+          ),
+          child: child,
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: current > 0
-              ? AppColors.primary.withValues(alpha: 0.4)
-              : AppColors.border,
-        ),
-        boxShadow: current > 0
-            ? [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                )
-              ]
-            : [],
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              gradient: current > 0
-                  ? AppGradients.brand
-                  : const LinearGradient(colors: [
-                      AppColors.bgCardElevated,
-                      AppColors.bgCardElevated
-                    ]),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: current > 0
-                  ? [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.4),
-                        blurRadius: 16,
-                      )
-                    ]
-                  : [],
-            ),
-            child: Icon(
-              Icons.local_fire_department_rounded,
-              color: current > 0 ? Colors.white : AppColors.textMuted,
-              size: 28,
+          Icon(
+            Icons.local_fire_department_rounded,
+            color: active ? AppColors.neonGold : AppColors.textMuted,
+            size: 16,
+          ),
+          const SizedBox(width: 5),
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: days.toDouble()),
+            duration: const Duration(milliseconds: 900),
+            curve: Curves.easeOutCubic,
+            builder: (_, v, __) => Text(
+              '${v.round()}',
+              style: TextStyle(
+                color: active ? Colors.white : AppColors.textMuted,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.02,
+              ),
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '$current',
-                      style: TextStyle(
-                        color: current > 0 ? AppColors.primary : AppColors.textMuted,
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        height: 1,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 4),
-                      child: Text(
-                        'días seguidos',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  current == 0
-                      ? 'Empieza tu racha hoy'
-                      : current == 1
-                          ? '¡Buen comienzo!'
-                          : current >= 7
-                              ? '¡Racha increíble!'
-                              : '¡Sigue así!',
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+          const SizedBox(width: 4),
+          Text(
+            'días',
+            style: TextStyle(
+              color: active
+                  ? Colors.white.withValues(alpha: 0.7)
+                  : AppColors.textMuted,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Text(
-                'Mejor racha',
-                style: TextStyle(
-                  color: AppColors.textMuted,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  const Icon(Icons.emoji_events_rounded,
-                      color: AppColors.gold, size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    '$longest días',
-                    style: const TextStyle(
-                      color: AppColors.gold,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ],
           ),
         ],
       ),
