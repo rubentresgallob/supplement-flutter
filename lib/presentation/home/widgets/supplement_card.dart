@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../domain/entities/user_supplement.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/ui/ui.dart';
 
 class SupplementCard extends StatefulWidget {
   final UserSupplement supplement;
@@ -87,6 +89,14 @@ class _SupplementCardState extends State<SupplementCard>
           direction: widget.onDelete != null
               ? DismissDirection.endToStart
               : DismissDirection.none,
+          confirmDismiss: (_) => showAppConfirm(
+            context,
+            title: '¿Eliminar ${widget.supplement.name}?',
+            body: 'Se borrará de tu stack junto con su historial de tomas '
+                'y su recordatorio. No se puede deshacer.',
+            confirmLabel: 'Eliminar',
+            destructive: true,
+          ),
           onDismissed: (_) => widget.onDelete?.call(),
           background: _buildDismissBackground(),
           child: _buildCard(isComplete, accent, total),
@@ -106,7 +116,7 @@ class _SupplementCardState extends State<SupplementCard>
       ),
       alignment: Alignment.centerRight,
       padding: const EdgeInsets.only(right: 22),
-      child: const Icon(Icons.delete_outline_rounded,
+      child: const Icon(LucideIcons.trash2,
           color: Colors.white, size: 26),
     );
   }
@@ -235,7 +245,7 @@ class _SupplementCardState extends State<SupplementCard>
                       color: AppColors.bgCardElevated.withValues(alpha: 0.0),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.more_vert_rounded,
+                    child: const Icon(LucideIcons.ellipsisVertical,
                         color: AppColors.textMuted, size: 16),
                   ),
                 ),
@@ -310,7 +320,7 @@ class _SupplementCardState extends State<SupplementCard>
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                isTaken ? Icons.check_rounded : _scheduleIcon(s),
+                isTaken ? LucideIcons.check : _scheduleIcon(s),
                 size: 10,
                 color: isTaken
                     ? AppColors.success
@@ -418,7 +428,7 @@ class _SupplementCardState extends State<SupplementCard>
         ),
         child: Center(
           child: isComplete
-              ? const Icon(Icons.check_rounded,
+              ? const Icon(LucideIcons.check,
                   color: Colors.white, size: 20)
               : Text(
                   '${widget.taken}/$total',
@@ -427,8 +437,7 @@ class _SupplementCardState extends State<SupplementCard>
                         ? AppColors.primary
                         : AppColors.textMuted,
                     fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    fontFamily: 'Syne',
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
         ),
@@ -448,34 +457,34 @@ class _SupplementCardState extends State<SupplementCard>
       case 'pastilla':
       case 'tableta':
       case 'comprimido':
-        return Icons.medication_rounded;
+        return LucideIcons.pill;
       case 'cápsula':
-        return Icons.vaccines_rounded;
+        return LucideIcons.syringe;
       case 'polvo':
-        return Icons.science_rounded;
+        return LucideIcons.flaskConical;
       case 'líquido':
-        return Icons.water_drop_rounded;
+        return LucideIcons.droplet;
       case 'gominola':
-        return Icons.favorite_rounded;
+        return LucideIcons.heart;
       case 'gotas':
-        return Icons.opacity_rounded;
+        return LucideIcons.droplets;
       default:
-        return Icons.medical_services_rounded;
+        return LucideIcons.stethoscope;
     }
   }
 
   IconData _scheduleIcon(String schedule) {
     switch (schedule.toLowerCase()) {
       case 'mañana':
-        return Icons.wb_sunny_outlined;
+        return LucideIcons.sun;
       case 'mediodía':
-        return Icons.wb_cloudy_outlined;
+        return LucideIcons.cloudSun;
       case 'tarde':
-        return Icons.cloud_outlined;
+        return LucideIcons.sunset;
       case 'noche':
-        return Icons.nightlight_outlined;
+        return LucideIcons.moon;
       default:
-        return Icons.schedule;
+        return LucideIcons.clock;
     }
   }
 }

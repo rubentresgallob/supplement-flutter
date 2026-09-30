@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:forui/forui.dart';
 import '../core/constants/app_constants.dart';
+import '../core/theme/forui_theme.dart';
 import '../data/datasources/auth_remote_datasource.dart';
 import '../data/datasources/supplements_remote_datasource.dart';
 import '../data/datasources/intakes_remote_datasource.dart';
@@ -13,6 +15,7 @@ import 'auth/bloc/auth_state.dart';
 import 'auth/pages/login_page.dart';
 import 'home/pages/home_page.dart';
 import 'home/bloc/home_bloc.dart';
+import 'onboarding/pages/onboarding_page.dart';
 
 class SupplementTrackerApp extends StatelessWidget {
   final AuthBloc authBloc;
@@ -52,6 +55,15 @@ class SupplementTrackerApp extends StatelessWidget {
           title: AppConstants.appName,
           debugShowCheckedModeBanner: false,
           theme: _buildTheme(),
+          // App en español (textos de forui y de Material)
+          locale: AppLocalization.locale,
+          localizationsDelegates: AppLocalization.delegates,
+          supportedLocales: AppLocalization.supportedLocales,
+          // Tema forui conectado a nuestros tokens para sus componentes
+          builder: (context, child) => FTheme(
+            data: AppForuiTheme.data,
+            child: child!,
+          ),
           home: BlocBuilder<AuthBloc, AuthState>(
             buildWhen: (previous, current) =>
                 current is! AuthLoadingState || previous is AuthInitialState,
@@ -60,7 +72,7 @@ class SupplementTrackerApp extends StatelessWidget {
                 return const _SplashScreen();
               }
               if (state is AuthAuthenticatedState) {
-                return const HomePage();
+                return _OnboardingGate(localStorage: localStorage);
               }
               return const LoginPage();
             },
@@ -69,6 +81,8 @@ class SupplementTrackerApp extends StatelessWidget {
       ),
     );
   }
+
+  static const _font = FTypeface.defaultFontFamily;
 
   ThemeData _buildTheme() {
     final base = ThemeData.dark(useMaterial3: true);
@@ -79,25 +93,31 @@ class SupplementTrackerApp extends StatelessWidget {
         secondary: AppColors.gold,
         surface: AppColors.bgCard,
         error: AppColors.error,
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
+        onPrimary: AppColors.onPrimary,
+        onSecondary: AppColors.onPrimary,
         onSurface: AppColors.textPrimary,
         onError: Colors.white,
       ),
-      textTheme: GoogleFonts.syneTextTheme(base.textTheme).copyWith(
-        bodyLarge: GoogleFonts.outfit(
+      textTheme: base.textTheme.apply(fontFamily: _font).copyWith(
+        bodyLarge: const TextStyle(
+            fontFamily: _font,
             color: AppColors.textPrimary, fontSize: 16),
-        bodyMedium: GoogleFonts.outfit(
+        bodyMedium: const TextStyle(
+            fontFamily: _font,
             color: AppColors.textPrimary, fontSize: 14),
-        bodySmall: GoogleFonts.outfit(
+        bodySmall: const TextStyle(
+            fontFamily: _font,
             color: AppColors.textSecondary, fontSize: 12),
-        labelLarge: GoogleFonts.outfit(
+        labelLarge: const TextStyle(
+            fontFamily: _font,
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w600,
             fontSize: 14),
-        labelMedium: GoogleFonts.outfit(
+        labelMedium: const TextStyle(
+            fontFamily: _font,
             color: AppColors.textSecondary, fontSize: 12),
-        labelSmall: GoogleFonts.outfit(
+        labelSmall: const TextStyle(
+            fontFamily: _font,
             color: AppColors.textMuted, fontSize: 11),
       ).apply(
         bodyColor: AppColors.textPrimary,
@@ -111,7 +131,8 @@ class SupplementTrackerApp extends StatelessWidget {
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
         ),
-        titleTextStyle: GoogleFonts.syne(
+        titleTextStyle: const TextStyle(
+            fontFamily: _font,
           color: AppColors.textPrimary,
           fontSize: 18,
           fontWeight: FontWeight.w700,
@@ -157,7 +178,7 @@ class SupplementTrackerApp extends StatelessWidget {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.onPrimary,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -195,6 +216,34 @@ class SupplementTrackerApp extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
+    );
+  }
+}
+
+/// Muestra el tutorial de Capsu la primera vez; después, la Home.
+class _OnboardingGate extends StatefulWidget {
+  final LocalStorageDataSource localStorage;
+  const _OnboardingGate({required this.localStorage});
+
+  @override
+  State<_OnboardingGate> createState() => _OnboardingGateState();
+}
+
+class _OnboardingGateState extends State<_OnboardingGate> {
+  late bool _done = widget.localStorage.isOnboardingDone();
+
+  Future<void> _finish() async {
+    await widget.localStorage.setOnboardingDone();
+    if (mounted) setState(() => _done = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 400),
+      child: _done
+          ? const HomePage()
+          : OnboardingPage(key: const ValueKey('onboarding'), onDone: _finish),
     );
   }
 }
@@ -243,13 +292,13 @@ class _BrandLogo extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.4),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 24,
             spreadRadius: 2,
           ),
         ],
       ),
-      child: Icon(Icons.local_fire_department_rounded,
+      child: Icon(LucideIcons.flame,
           color: Colors.white, size: size * 0.55),
     );
   }

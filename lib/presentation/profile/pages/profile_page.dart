@@ -1,13 +1,16 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/ui/ui.dart';
 import '../../../data/datasources/local_storage_datasource.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../../auth/bloc/auth_state.dart';
 import '../../home/bloc/home_bloc.dart';
 import '../../home/bloc/home_state.dart';
+import '../../onboarding/pages/onboarding_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -89,88 +92,15 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Future<void> _editBio() async {
-    final ctrl = TextEditingController(text: _bio);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: AppColors.bgCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.border),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ShaderMask(
-                shaderCallback: (b) => AppGradients.brand.createShader(b),
-                child: const Text(
-                  'Tu descripción',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: ctrl,
-                maxLines: 4,
-                maxLength: 150,
-                autofocus: true,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                  hintText: 'Cuéntale a tus amigos sobre ti...',
-                  counterStyle: TextStyle(color: AppColors.textMuted),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx),
-                    child: Container(
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: AppColors.bgCardElevated,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: const Center(
-                          child: Text('Cancelar',
-                              style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w600))),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx, ctrl.text.trim()),
-                    child: Container(
-                      height: 46,
-                      decoration: BoxDecoration(
-                          gradient: AppGradients.brand,
-                          borderRadius: BorderRadius.circular(12)),
-                      child: const Center(
-                          child: Text('Guardar',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700))),
-                    ),
-                  ),
-                ),
-              ]),
-            ],
-          ),
-        ),
-      ),
+    final result = await showAppPrompt(
+      context,
+      title: 'Tu descripción',
+      body: 'Cuéntale a tus amigos qué te motiva.',
+      confirmLabel: 'Guardar',
+      hint: 'Ej.: Entrenando para mi primera maratón',
+      initialValue: _bio,
+      maxLines: 3,
     );
-
     if (result != null && mounted) {
       final ls = context.read<LocalStorageDataSource>();
       await ls.saveBio(result);
@@ -212,7 +142,7 @@ class _ProfilePageState extends State<ProfilePage>
                             style: TextStyle(
                                 color: AppColors.textPrimary,
                                 fontSize: 24,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w600,
                                 letterSpacing: -0.5)),
                       ],
                     ),
@@ -268,7 +198,7 @@ class _ProfilePageState extends State<ProfilePage>
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 20,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w600,
                                     letterSpacing: -0.3,
                                   ),
                                 ),
@@ -314,7 +244,7 @@ class _ProfilePageState extends State<ProfilePage>
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      const Icon(Icons.edit_rounded,
+                                      const Icon(LucideIcons.pencil,
                                           size: 14,
                                           color: AppColors.textMuted),
                                     ],
@@ -437,10 +367,10 @@ class _ProfilePageState extends State<ProfilePage>
                           child: Column(
                             children: [
                               _SettingsTile(
-                                icon: Icons.notifications_outlined,
+                                icon: LucideIcons.bell,
                                 label: 'Notificaciones',
                                 trailing: const Icon(
-                                    Icons.chevron_right_rounded,
+                                    LucideIcons.chevronRight,
                                     color: AppColors.textMuted),
                                 onTap: () {},
                               ),
@@ -449,7 +379,25 @@ class _ProfilePageState extends State<ProfilePage>
                                   color: AppColors.border,
                                   indent: 52),
                               _SettingsTile(
-                                icon: Icons.info_outline_rounded,
+                                icon: LucideIcons.pill,
+                                label: 'Ver tutorial de Capsu',
+                                trailing: const Icon(
+                                    LucideIcons.chevronRight,
+                                    color: AppColors.textMuted),
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (ctx) => OnboardingPage(
+                                      onDone: () => Navigator.of(ctx).pop(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const Divider(
+                                  height: 1,
+                                  color: AppColors.border,
+                                  indent: 52),
+                              _SettingsTile(
+                                icon: LucideIcons.info,
                                 label: 'Versión de la app',
                                 trailing: const Text('1.0.0',
                                     style: TextStyle(
@@ -491,7 +439,7 @@ class _ProfilePageState extends State<ProfilePage>
                         child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.logout_rounded,
+                            Icon(LucideIcons.logOut,
                                 color: AppColors.error, size: 20),
                             SizedBox(width: 10),
                             Text('Cerrar sesión',
@@ -576,9 +524,9 @@ class _AnimatedAvatarRing extends StatelessWidget {
           child: Text(
             letter,
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.onPrimary,
               fontSize: 34,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -634,8 +582,7 @@ class _BentoStatCard extends StatelessWidget {
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 36,
-                      fontWeight: FontWeight.w800,
-                      fontFamily: 'Syne',
+                      fontWeight: FontWeight.w600,
                       height: 1,
                     ),
                   ),
@@ -706,8 +653,7 @@ class _BentoStatCardWide extends StatelessWidget {
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 36,
-                          fontWeight: FontWeight.w800,
-                          fontFamily: 'Syne',
+                          fontWeight: FontWeight.w600,
                           height: 1,
                         ),
                       ),
@@ -726,7 +672,7 @@ class _BentoStatCardWide extends StatelessWidget {
             ],
           ),
           Icon(
-            Icons.medication_rounded,
+            LucideIcons.pill,
             size: 32,
             color: AppColors.primary.withValues(alpha: 0.3),
           ),

@@ -46,22 +46,24 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       final userStreak = await _intakesDataSource.getUserStreak();
 
-      // Sincronizar notificaciones: cancelar si completo, reprogramar si pendiente
+      // Sincronizar recordatorios. Si hoy ya está completo, el aviso de hoy
+      // se salta pero el recordatorio diario SIGUE activo (antes se cancelaba
+      // y al día siguiente no llegaba nada si no se abría la app).
+      final withReminder = supplements
+          .where((s) => _localStorage.getNotificationTime(s.id) != null)
+          .length;
+      final daysAhead = NotificationService.daysAheadFor(withReminder);
       for (final s in supplements) {
-        final taken = progress[s.id] ?? 0;
         final savedTime = _localStorage.getNotificationTime(s.id);
         if (savedTime == null) continue;
-
-        final notifId = NotificationService.idFromSupplementId(s.id);
-        if (taken >= s.timesPerDay) {
-          await NotificationService.cancelReminder(notifId);
-        } else {
-          await NotificationService.scheduleReminder(
-            id: notifId,
-            supplementName: s.name,
-            time: savedTime,
-          );
-        }
+        final taken = progress[s.id] ?? 0;
+        await NotificationService.scheduleReminder(
+          id: NotificationService.idFromSupplementId(s.id),
+          supplementName: s.name,
+          time: savedTime,
+          skipToday: taken >= s.timesPerDay,
+          daysAhead: daysAhead,
+        );
       }
 
       emit(HomeLoadedState(
@@ -113,6 +115,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) async {
     try {
       await _supplementsDataSource.deleteUserSupplement(event.supplementId);
+      await _localStorage.removeNotificationTime(event.supplementId);
       await NotificationService.cancelReminder(
         NotificationService.idFromSupplementId(event.supplementId),
       );

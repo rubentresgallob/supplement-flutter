@@ -17,15 +17,27 @@ import 'presentation/app.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Timezone local del dispositivo (necesario para programar notificaciones)
+  // Timezone local del dispositivo (necesario para programar notificaciones).
+  // Si el sistema devuelve una zona desconocida, usamos Madrid en vez de cerrar la app.
   tz.initializeTimeZones();
-  final timezoneInfo = await FlutterTimezone.getLocalTimezone();
-  tz_lib.setLocalLocation(tz_lib.getLocation(timezoneInfo.identifier));
+  try {
+    final timezoneInfo = await FlutterTimezone.getLocalTimezone();
+    tz_lib.setLocalLocation(tz_lib.getLocation(timezoneInfo.identifier));
+  } catch (_) {
+    tz_lib.setLocalLocation(tz_lib.getLocation('Europe/Madrid'));
+  }
 
+  // Los permisos se piden al configurar el primer recordatorio, no al arrancar.
   await NotificationService.initialize();
-  await NotificationService.requestPermissions();
 
   final sharedPreferences = await SharedPreferences.getInstance();
+
+  // Migración única: los recordatorios antiguos usaban IDs basados en
+  // String.hashCode (inestables). Se borran y la Home los reprograma con IDs fijos.
+  if (!(sharedPreferences.getBool('notif_ids_v2') ?? false)) {
+    await NotificationService.cancelAll();
+    await sharedPreferences.setBool('notif_ids_v2', true);
+  }
 
   final localStorage = LocalStorageDataSource(sharedPreferences);
   final apiClient = ApiClient(localStorage);

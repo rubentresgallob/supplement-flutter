@@ -1,11 +1,15 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/mascot/capsu.dart';
+import '../../../core/widgets/ui/ui.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -21,9 +25,16 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
+  // Estado de Capsu
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+  bool _greeting = true;
+  bool _loginError = false;
+  Timer? _greetTimer;
+  Timer? _errorTimer;
+
   late final AnimationController _blobCtrl;
   late final AnimationController _logoScaleCtrl;
-  late final AnimationController _logoPulseCtrl;
   late final AnimationController _cardCtrl;
   late final AnimationController _shimmerCtrl;
 
@@ -54,11 +65,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       CurvedAnimation(parent: _logoScaleCtrl, curve: const Interval(0, 0.4)),
     );
 
-    _logoPulseCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2400),
-    )..repeat(reverse: true);
-
     _cardCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
@@ -76,6 +82,14 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     _shimmerAnim =
         CurvedAnimation(parent: _shimmerCtrl, curve: Curves.easeInOut);
 
+    // Capsu reacciona al foco y a lo que se escribe
+    for (final l in [_emailFocus, _passwordFocus, _emailController]) {
+      l.addListener(_refreshCapsu);
+    }
+    _greetTimer = Timer(const Duration(milliseconds: 3500), () {
+      if (mounted) setState(() => _greeting = false);
+    });
+
     _logoScaleCtrl.forward().then((_) {
       Future.delayed(const Duration(milliseconds: 400), () {
         if (mounted) _cardCtrl.forward();
@@ -87,12 +101,54 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   void dispose() {
     _blobCtrl.dispose();
     _logoScaleCtrl.dispose();
-    _logoPulseCtrl.dispose();
+    _greetTimer?.cancel();
+    _errorTimer?.cancel();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
     _cardCtrl.dispose();
     _shimmerCtrl.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _refreshCapsu() {
+    if (mounted) setState(() {});
+  }
+
+  CapsuMood _capsuMood(bool isLoading) {
+    if (_loginError) return CapsuMood.sad;
+    if (isLoading) return CapsuMood.thinking;
+    if (_passwordFocus.hasFocus) {
+      return _obscurePassword ? CapsuMood.shy : CapsuMood.peek;
+    }
+    if (_emailFocus.hasFocus) return CapsuMood.idle;
+    return _greeting ? CapsuMood.wave : CapsuMood.idle;
+  }
+
+  /// Mientras escribes el correo, Capsu sigue el cursor con la mirada.
+  Offset get _capsuLook {
+    if (!_emailFocus.hasFocus) return Offset.zero;
+    final progress = (_emailController.text.length / 28).clamp(0.0, 1.0);
+    return Offset(-0.8 + 1.6 * progress, 0.9);
+  }
+
+  String _capsuSays(bool isLoading) {
+    if (_loginError) return 'Uy… algo no cuadra 😕';
+    if (isLoading) return 'Comprobando… 🤔';
+    if (_passwordFocus.hasFocus) {
+      return _obscurePassword
+          ? '¡No miro, lo prometo! 🙈'
+          : 'Vale… solo un poquito 👀';
+    }
+    if (_emailFocus.hasFocus) {
+      final email = _emailController.text;
+      if (email.isEmpty) return 'Escribe tu correo 👇';
+      return email.contains('@') && email.contains('.')
+          ? '¡Ese correo me suena! 😄'
+          : 'Te leo… ✍️';
+    }
+    return '¡Hola! Soy Capsu. ¿Entramos? 💊';
   }
 
   void _onLoginPressed() {
@@ -109,10 +165,12 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthErrorState) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(state.message),
-            backgroundColor: AppColors.error,
-          ));
+          AppToast.show(context, state.message, type: AppToastType.error);
+          _errorTimer?.cancel();
+          setState(() => _loginError = true);
+          _errorTimer = Timer(const Duration(milliseconds: 3200), () {
+            if (mounted) setState(() => _loginError = false);
+          });
         }
       },
       child: Scaffold(
@@ -133,9 +191,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                       children: [
-                        const SizedBox(height: 48),
-                        _buildLogo(),
-                        const SizedBox(height: 36),
+                        const SizedBox(height: 20),
+                        _buildLogo(isLoading),
+                        const SizedBox(height: 28),
                         _buildFormCard(isLoading),
                         const SizedBox(height: 28),
                         _buildDivider(),
@@ -156,58 +214,36 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildLogo() {
+  Widget _buildLogo(bool isLoading) {
     return FadeTransition(
       opacity: _logoOpacity,
       child: ScaleTransition(
         scale: _logoScale,
         child: Column(
           children: [
-            AnimatedBuilder(
-              animation: _logoPulseCtrl,
-              builder: (_, child) {
-                final glow = 0.5 + 0.5 * _logoPulseCtrl.value;
-                return Container(
-                  width: 88,
-                  height: 88,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFF3D00), Color(0xFFFF6B35), Color(0xFFFAB437)],
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.4 + 0.25 * glow),
-                        blurRadius: 28 + 20 * glow,
-                        spreadRadius: 4 + 4 * glow,
-                      ),
-                      BoxShadow(
-                        color: AppColors.gold.withValues(alpha: 0.15 * glow),
-                        blurRadius: 60,
-                        spreadRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: child,
-                );
-              },
-              child: const Icon(
-                Icons.local_fire_department_rounded,
-                color: Colors.white,
-                size: 48,
+            ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 64),
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: CapsuBubble(text: _capsuSays(isLoading)),
               ),
             ),
-            const SizedBox(height: 22),
+            // El lienzo de Capsu deja aire arriba para saltos: lo acercamos al bocadillo
+            Transform.translate(
+              offset: const Offset(0, -14),
+              child: Capsu(
+                size: 96,
+                mood: _capsuMood(isLoading),
+                lookAt: _capsuLook,
+              ),
+            ),
             const Text(
               'Enciende\ntu racha.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.textPrimary,
-                fontSize: 32,
-                fontWeight: FontWeight.w800,
-                fontFamily: 'Syne',
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
                 letterSpacing: -0.6,
                 height: 1.05,
               ),
@@ -236,10 +272,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         child: Container(
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
-            color: const Color(0xFF1A2234).withValues(alpha: 0.62),
+            color: const Color(0xFF1F1F1F).withValues(alpha: 0.62),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.18),
+              color: AppColors.primary.withValues(alpha: 0.08),
             ),
             boxShadow: [
               BoxShadow(
@@ -256,11 +292,12 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
               children: [
                 TextFormField(
                   controller: _emailController,
+                  focusNode: _emailFocus,
                   keyboardType: TextInputType.emailAddress,
                   style: const TextStyle(color: AppColors.textPrimary),
                   decoration: const InputDecoration(
                     labelText: 'Correo electrónico',
-                    prefixIcon: Icon(Icons.email_outlined),
+                    prefixIcon: Icon(LucideIcons.mail),
                   ),
                   validator: Validators.validateEmail,
                   enabled: !isLoading,
@@ -268,15 +305,16 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                 const SizedBox(height: 14),
                 TextFormField(
                   controller: _passwordController,
+                  focusNode: _passwordFocus,
                   obscureText: _obscurePassword,
                   style: const TextStyle(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     labelText: 'Contraseña',
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(LucideIcons.lock),
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined),
+                          ? LucideIcons.eye
+                          : LucideIcons.eyeOff),
                       onPressed: () =>
                           setState(() => _obscurePassword = !_obscurePassword),
                     ),
@@ -360,7 +398,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     return Container(
       height: 50,
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2234).withValues(alpha: 0.6),
+        color: const Color(0xFF1F1F1F).withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: AppColors.border),
       ),
@@ -428,7 +466,7 @@ class _BlobPainter extends CustomPainter {
     final paint1 = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppColors.primary.withValues(alpha: 0.28),
+          AppColors.primary.withValues(alpha: 0.06),
           AppColors.primary.withValues(alpha: 0),
         ],
       ).createShader(Rect.fromCircle(
@@ -456,7 +494,7 @@ class _BlobPainter extends CustomPainter {
     final paint3 = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppColors.primary.withValues(alpha: 0.12),
+          AppColors.primary.withValues(alpha: 0.04),
           AppColors.primary.withValues(alpha: 0),
         ],
       ).createShader(Rect.fromCircle(
@@ -574,7 +612,7 @@ class _AnimatedGradientButtonState extends State<_AnimatedGradientButton>
                 boxShadow: enabled
                     ? [
                         BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.5),
+                          color: Colors.black.withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 6),
                           spreadRadius: 1,
@@ -596,16 +634,15 @@ class _AnimatedGradientButtonState extends State<_AnimatedGradientButton>
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2.5, color: Colors.white),
+                        strokeWidth: 2.5, color: AppColors.onPrimary),
                   )
                 : Text(
                     widget.label,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.onPrimary,
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
                       letterSpacing: 0.3,
-                      fontFamily: 'Syne',
                     ),
                   ),
           ),

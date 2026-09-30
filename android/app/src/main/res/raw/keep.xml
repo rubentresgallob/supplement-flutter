@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El icono de notificación se referencia por nombre desde Dart; sin esto,
+     el "resource shrinking" de la build release podría eliminarlo. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_capsu" />

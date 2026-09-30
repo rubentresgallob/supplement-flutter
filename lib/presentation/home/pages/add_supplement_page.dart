@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/datasources/supplements_remote_datasource.dart';
 import '../../../data/datasources/local_storage_datasource.dart';
 import '../../../data/models/supplement_database_model.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/mascot/capsu.dart';
+import '../../../core/widgets/ui/ui.dart';
 import '../../../core/services/notification_service.dart';
 
 class AddSupplementPage extends StatefulWidget {
@@ -84,6 +87,7 @@ class _AddSupplementPageState extends State<AddSupplementPage> {
         title: const Text('Añadir Suplemento'),
         leading: GestureDetector(
           onTap: () => Navigator.of(context).pop(),
+          behavior: HitTestBehavior.opaque,
           child: Container(
             margin: const EdgeInsets.all(10),
             decoration: BoxDecoration(
@@ -91,7 +95,7 @@ class _AddSupplementPageState extends State<AddSupplementPage> {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: AppColors.border),
             ),
-            child: const Icon(Icons.arrow_back_ios_new,
+            child: const Icon(LucideIcons.arrowLeft,
                 size: 15, color: AppColors.textPrimary),
           ),
         ),
@@ -106,10 +110,10 @@ class _AddSupplementPageState extends State<AddSupplementPage> {
               style: const TextStyle(color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Buscar por nombre o categoría...',
-                prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textMuted),
+                prefixIcon: const Icon(LucideIcons.search, color: AppColors.textMuted),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
+                        icon: const Icon(LucideIcons.x, color: AppColors.textMuted),
                         onPressed: () => _searchController.clear(),
                       )
                     : null,
@@ -123,39 +127,43 @@ class _AddSupplementPageState extends State<AddSupplementPage> {
   }
 
   Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(
-          child: CircularProgressIndicator(color: AppColors.primary));
-    }
+    if (_isLoading) return const AppListSkeleton(itemCount: 7);
     if (_error != null) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.cloud_off_rounded,
-                  size: 56, color: AppColors.textMuted),
-              const SizedBox(height: 16),
-              Text(_error!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary)),
-              const SizedBox(height: 20),
-              GestureDetector(
-                onTap: _loadCatalog,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 12),
-                  decoration: BoxDecoration(
-                    gradient: AppGradients.brand,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text('Reintentar',
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.w600)),
-                ),
+        child: AppEmpty(
+          media: const Capsu(size: 90, mood: CapsuMood.sad),
+          icon: LucideIcons.cloudOff,
+          title: 'Sin conexión con el catálogo',
+          description: 'Comprueba tu conexión e inténtalo de nuevo.',
+          action: AppButton(
+            label: 'Reintentar',
+            icon: LucideIcons.refreshCw,
+            variant: AppButtonVariant.outline,
+            onPressed: _loadCatalog,
+          ),
+        ),
+      );
+    }
+    if (_filtered.isEmpty) {
+      return Center(
+        child: SingleChildScrollView(
+          child: AppEmpty(
+            media: const Capsu(size: 90, mood: CapsuMood.surprised),
+            icon: LucideIcons.searchX,
+            title: 'Sin resultados',
+            description:
+                'No encontramos "${_searchController.text}" en el catálogo. Puedes añadirlo como personalizado.',
+            action: AppButton(
+              label: 'Crear personalizado',
+              icon: LucideIcons.plus,
+              onPressed: () => _openConfigure(
+                name: '',
+                availableForms: const [
+                  'pastilla', 'cápsula', 'polvo', 'líquido', 'gominola', 'gotas'
+                ],
+                isCustom: true,
               ),
-            ],
+            ),
           ),
         ),
       );
@@ -189,7 +197,7 @@ class _AddSupplementPageState extends State<AddSupplementPage> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF1A0D00), Color(0xFF0F1623)],
+                colors: [Color(0xFF1C1C1C), Color(0xFF171717)],
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
@@ -205,12 +213,12 @@ class _AddSupplementPageState extends State<AddSupplementPage> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.3),
+                          color: Colors.black.withValues(alpha: 0.3),
                           blurRadius: 10)
                     ],
                   ),
-                  child: const Icon(Icons.add_rounded,
-                      color: Colors.white, size: 24),
+                  child: const Icon(LucideIcons.plus,
+                      color: AppColors.onPrimary, size: 24),
                 ),
                 const SizedBox(width: 14),
                 const Expanded(
@@ -229,7 +237,7 @@ class _AddSupplementPageState extends State<AddSupplementPage> {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded,
+                const Icon(LucideIcons.chevronRight,
                     color: AppColors.textMuted),
               ],
             ),
@@ -262,7 +270,7 @@ class _CatalogTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = _categoryColors[supplement.category.toLowerCase()] ??
-        [const Color(0xFF1A1A2A), AppColors.primary];
+        [const Color(0xFF1F1F1F), AppColors.primary];
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -308,7 +316,7 @@ class _CatalogTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded,
+            const Icon(LucideIcons.chevronRight,
                 color: AppColors.textMuted, size: 20),
           ],
         ),
@@ -318,14 +326,14 @@ class _CatalogTile extends StatelessWidget {
 
   IconData _icon(String category) {
     switch (category.toLowerCase()) {
-      case 'vitamina': return Icons.water_drop_rounded;
-      case 'mineral': return Icons.diamond_outlined;
-      case 'proteína': return Icons.fitness_center_rounded;
-      case 'aminoácido': return Icons.bolt_rounded;
-      case 'planta': return Icons.eco_rounded;
-      case 'probiótico': return Icons.bubble_chart_rounded;
-      case 'ácido graso': return Icons.opacity_rounded;
-      default: return Icons.medical_services_rounded;
+      case 'vitamina': return LucideIcons.droplet;
+      case 'mineral': return LucideIcons.gem;
+      case 'proteína': return LucideIcons.dumbbell;
+      case 'aminoácido': return LucideIcons.zap;
+      case 'planta': return LucideIcons.leaf;
+      case 'probiótico': return LucideIcons.microscope;
+      case 'ácido graso': return LucideIcons.droplets;
+      default: return LucideIcons.stethoscope;
     }
   }
 }
@@ -354,10 +362,10 @@ class _ConfigureSheet extends StatefulWidget {
 class _ConfigureSheetState extends State<_ConfigureSheet> {
   static const _dosageUnits = ['mg', 'g', 'µg', 'UI', 'ml', 'cápsulas', 'comprimidos'];
   static const _scheduleOptions = [
-    ('mañana',   Icons.wb_sunny_outlined,   'Mañana'),
-    ('mediodía', Icons.wb_cloudy_outlined,  'Mediodía'),
-    ('tarde',    Icons.cloud_outlined,      'Tarde'),
-    ('noche',    Icons.nightlight_outlined, 'Noche'),
+    ('mañana',   LucideIcons.sun,   'Mañana'),
+    ('mediodía', LucideIcons.cloudSun,  'Mediodía'),
+    ('tarde',    LucideIcons.sunset,      'Tarde'),
+    ('noche',    LucideIcons.moon, 'Noche'),
   ];
 
   final _formKey = GlobalKey<FormState>();
@@ -438,33 +446,31 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
   }
 
   Future<void> _pickNotificationTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _notificationTime ?? const TimeOfDay(hour: 9, minute: 0),
-      builder: (ctx, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: AppColors.primary,
-            surface: AppColors.bgCardElevated,
-            onSurface: AppColors.textPrimary,
-          ),
-          timePickerTheme: TimePickerThemeData(
-            backgroundColor: AppColors.bgCard,
-            dialBackgroundColor: AppColors.bgCardElevated,
-            hourMinuteColor: AppColors.bgCardElevated,
-          ),
-        ),
-        child: child!,
-      ),
-    );
-    if (picked != null) setState(() => _notificationTime = picked);
+    final picked =
+        await showReminderTimePicker(context, initial: _notificationTime);
+    if (picked == null || !mounted) return;
+    setState(() => _notificationTime = picked);
+    // Pedimos permiso justo cuando el usuario quiere un recordatorio
+    final allowed = await NotificationService.ensurePermissions();
+    if (!allowed && mounted) {
+      AppToast.show(
+        context,
+        'Activa las notificaciones de la app en Ajustes para recibir el recordatorio',
+        type: AppToastType.warning,
+      );
+    }
   }
 
   void _snack(String msg, {bool isError = false, bool isSuccess = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: isError ? AppColors.error : isSuccess ? AppColors.success : null,
-    ));
+    AppToast.show(
+      context,
+      msg,
+      type: isError
+          ? AppToastType.error
+          : isSuccess
+              ? AppToastType.success
+              : AppToastType.warning,
+    );
   }
 
   @override
@@ -473,7 +479,9 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        border: Border(top: BorderSide(color: AppColors.hairline)),
       ),
       padding: EdgeInsets.fromLTRB(24, 8, 24, 24 + bottom),
       child: SingleChildScrollView(
@@ -498,7 +506,7 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
                 widget.isCustom ? 'Suplemento personalizado' : widget.name,
                 style: const TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.3),
+                  fontSize: 20, fontWeight: FontWeight.w600, letterSpacing: -0.3),
               ),
               const SizedBox(height: 24),
 
@@ -507,7 +515,7 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
                   controller: _nameCtrl,
                   style: const TextStyle(color: AppColors.textPrimary),
                   decoration: const InputDecoration(
-                    labelText: 'Nombre', prefixIcon: Icon(Icons.medication_rounded)),
+                    labelText: 'Nombre', prefixIcon: Icon(LucideIcons.pill)),
                   validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
                 ),
                 const SizedBox(height: 16),
@@ -516,30 +524,15 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
               _SectionLabel('Forma'),
               const SizedBox(height: 8),
               Wrap(
-                spacing: 8, runSpacing: 6,
-                children: widget.availableForms.map((f) {
-                  final sel = _selectedForm == f;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedForm = f),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        gradient: sel ? AppGradients.brand : null,
-                        color: sel ? null : AppColors.bgCardElevated,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: sel ? Colors.transparent : AppColors.border),
-                        boxShadow: sel ? [BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 8)] : [],
-                      ),
-                      child: Text(f, style: TextStyle(
-                        color: sel ? Colors.white : AppColors.textSecondary,
-                        fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
-                        fontSize: 13,
-                      )),
-                    ),
-                  );
-                }).toList(),
+                spacing: 8,
+                runSpacing: 8,
+                children: widget.availableForms
+                    .map((f) => AppToggleChip(
+                          label: f,
+                          selected: _selectedForm == f,
+                          onChanged: (_) => setState(() => _selectedForm = f),
+                        ))
+                    .toList(),
               ),
               const SizedBox(height: 20),
 
@@ -581,39 +574,17 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
               _SectionLabel('Horarios'),
               const SizedBox(height: 8),
               Wrap(
-                spacing: 8, runSpacing: 6,
+                spacing: 8,
+                runSpacing: 8,
                 children: _scheduleOptions.map((opt) {
                   final (value, icon, label) = opt;
-                  final sel = _schedules.contains(value);
-                  return GestureDetector(
-                    onTap: () => setState(() {
-                      if (sel) _schedules.remove(value); else _schedules.add(value);
+                  return AppToggleChip(
+                    label: label,
+                    icon: icon,
+                    selected: _schedules.contains(value),
+                    onChanged: (sel) => setState(() {
+                      sel ? _schedules.add(value) : _schedules.remove(value);
                     }),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        gradient: sel ? AppGradients.brand : null,
-                        color: sel ? null : AppColors.bgCardElevated,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: sel ? Colors.transparent : AppColors.border),
-                        boxShadow: sel ? [BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 8)] : [],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(icon, size: 14,
-                              color: sel ? Colors.white : AppColors.textSecondary),
-                          const SizedBox(width: 6),
-                          Text(label, style: TextStyle(
-                            color: sel ? Colors.white : AppColors.textSecondary,
-                            fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
-                            fontSize: 13,
-                          )),
-                        ],
-                      ),
-                    ),
                   );
                 }).toList(),
               ),
@@ -623,66 +594,18 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
               const SizedBox(height: 8),
               if (_isPillUnit)
                 // Cápsulas/comprimidos: cada unidad = 1 toma (automático)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.07),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info_outline_rounded,
-                          size: 16, color: AppColors.primary),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Cada ${_dosageUnit == 'cápsulas' ? 'cápsula' : 'comprimido'} cuenta como 1 toma — total: $_computedTimesPerDay tomas al día',
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                AppAlert(
+                  message:
+                      'Cada ${_dosageUnit == 'cápsulas' ? 'cápsula' : 'comprimido'} cuenta como 1 toma — total: $_computedTimesPerDay tomas al día',
                 )
               else
                 // Otras unidades: stepper manual
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgCardElevated,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        onPressed: _timesPerDay > 1
-                            ? () => setState(() => _timesPerDay--)
-                            : null,
-                        icon: const Icon(Icons.remove_rounded),
-                        color: _timesPerDay > 1 ? AppColors.primary : AppColors.textMuted,
-                      ),
-                      Text(
-                        '$_timesPerDay ${_timesPerDay == 1 ? 'vez al día' : 'veces al día'}',
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: _timesPerDay < 20
-                            ? () => setState(() => _timesPerDay++)
-                            : null,
-                        icon: const Icon(Icons.add_rounded),
-                        color: _timesPerDay < 20 ? AppColors.primary : AppColors.textMuted,
-                      ),
-                    ],
-                  ),
+                AppNumberField(
+                  value: _timesPerDay,
+                  min: 1,
+                  max: 20,
+                  format: (v) => '$v ${v == 1 ? 'vez al día' : 'veces al día'}',
+                  onChanged: (v) => setState(() => _timesPerDay = v),
                 ),
               const SizedBox(height: 20),
 
@@ -707,8 +630,8 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
                     children: [
                       Icon(
                         _notificationTime != null
-                            ? Icons.notifications_active_rounded
-                            : Icons.notifications_none_rounded,
+                            ? LucideIcons.bellRing
+                            : LucideIcons.bell,
                         color: _notificationTime != null
                             ? AppColors.primary
                             : AppColors.textMuted,
@@ -729,10 +652,16 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
                         ),
                       ),
                       if (_notificationTime != null)
-                        GestureDetector(
-                          onTap: () => setState(() => _notificationTime = null),
-                          child: const Icon(Icons.close_rounded,
-                              color: AppColors.textMuted, size: 18),
+                        SizedBox(
+                          width: AppSpacing.minTouch,
+                          height: AppSpacing.minTouch,
+                          child: IconButton(
+                            tooltip: 'Quitar recordatorio',
+                            padding: EdgeInsets.zero,
+                            onPressed: () => setState(() => _notificationTime = null),
+                            icon: const Icon(LucideIcons.x,
+                                color: AppColors.textMuted, size: 18),
+                          ),
                         ),
                     ],
                   ),
@@ -740,29 +669,12 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
               ),
               const SizedBox(height: 28),
 
-              GestureDetector(
-                onTap: _saving ? null : _save,
-                child: Container(
-                  height: 54,
-                  decoration: BoxDecoration(
-                    gradient: _saving ? null : AppGradients.brand,
-                    color: _saving ? AppColors.bgCardElevated : null,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: _saving ? [] : [BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.4),
-                      blurRadius: 16, offset: const Offset(0, 6),
-                    )],
-                  ),
-                  child: Center(
-                    child: _saving
-                        ? const SizedBox(width: 22, height: 22,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2.5, color: Colors.white))
-                        : const Text('Guardar suplemento',
-                            style: TextStyle(color: Colors.white,
-                                fontWeight: FontWeight.w700, fontSize: 16)),
-                  ),
-                ),
+              AppButton(
+                label: 'Guardar suplemento',
+                size: AppButtonSize.lg,
+                expand: true,
+                loading: _saving,
+                onPressed: _save,
               ),
             ],
           ),

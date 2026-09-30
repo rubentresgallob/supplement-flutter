@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/datasources/friends_remote_datasource.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/ui/ui.dart';
 import '../../../core/services/notification_service.dart';
 
 class FriendsPage extends StatefulWidget {
@@ -54,7 +56,7 @@ class _FriendsPageState extends State<FriendsPage>
                               style: TextStyle(
                                   color: AppColors.textPrimary,
                                   fontSize: 24,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w600,
                                   letterSpacing: -0.5)),
                         ],
                       ),
@@ -75,14 +77,14 @@ class _FriendsPageState extends State<FriendsPage>
                         borderRadius: BorderRadius.circular(11),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.35),
+                            color: Colors.black.withValues(alpha: 0.3),
                             blurRadius: 10,
                           )
                         ],
                       ),
                       indicatorSize: TabBarIndicatorSize.tab,
                       dividerColor: Colors.transparent,
-                      labelColor: Colors.white,
+                      labelColor: AppColors.onPrimary,
                       unselectedLabelColor: AppColors.textMuted,
                       labelStyle: const TextStyle(
                           fontWeight: FontWeight.w700, fontSize: 13),
@@ -92,7 +94,7 @@ class _FriendsPageState extends State<FriendsPage>
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: const [
-                              Icon(Icons.leaderboard_rounded, size: 14),
+                              Icon(LucideIcons.chartColumn, size: 14),
                               SizedBox(width: 6),
                               Text('Clasificación'),
                             ],
@@ -159,99 +161,19 @@ class _FriendsTabState extends State<_FriendsTab> {
   }
 
   Future<void> _showAddFriendDialog() async {
-    final ctrl = TextEditingController();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: AppColors.bgCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.border),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text('Añadir amigo',
-                  style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800)),
-              const SizedBox(height: 6),
-              const Text('Introduce su usuario o email',
-                  style: TextStyle(
-                      color: AppColors.textSecondary, fontSize: 13)),
-              const SizedBox(height: 20),
-              TextField(
-                controller: ctrl,
-                autofocus: true,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                  hintText: 'usuario o email...',
-                  prefixIcon: Icon(Icons.person_search_rounded),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx, false),
-                    child: Container(
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: AppColors.bgCardElevated,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: const Center(
-                        child: Text('Cancelar',
-                            style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w600)),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx, true),
-                    child: Container(
-                      height: 46,
-                      decoration: BoxDecoration(
-                        gradient: AppGradients.brand,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.35),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Text('Enviar',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700)),
-                      ),
-                    ),
-                  ),
-                ),
-              ]),
-            ],
-          ),
-        ),
-      ),
+    final identifier = await showAppPrompt(
+      context,
+      title: 'Añadir amigo',
+      body: 'Introduce su nombre de usuario o su email.',
+      confirmLabel: 'Enviar solicitud',
+      hint: 'usuario o email',
+      icon: LucideIcons.userRoundSearch,
     );
-
-    if (confirmed == true && ctrl.text.trim().isNotEmpty && mounted) {
+    if (identifier != null && identifier.isNotEmpty && mounted) {
       try {
         await context
             .read<FriendsRemoteDataSource>()
-            .sendRequest(ctrl.text.trim());
+            .sendRequest(identifier);
         if (mounted) {
           _showSnack('Solicitud enviada', isSuccess: true);
           _load();
@@ -281,91 +203,14 @@ class _FriendsTabState extends State<_FriendsTab> {
   }
 
   Future<void> _remove(int friendId, String username) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: AppColors.bgCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.border),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                      color: AppColors.error.withValues(alpha: 0.3)),
-                ),
-                child: const Icon(Icons.person_remove_rounded,
-                    color: AppColors.error, size: 26),
-              ),
-              const SizedBox(height: 16),
-              const Text('Eliminar amigo',
-                  style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700)),
-              const SizedBox(height: 8),
-              Text('¿Eliminar a $username de tus amigos?',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      color: AppColors.textSecondary, fontSize: 14)),
-              const SizedBox(height: 24),
-              Row(children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx, false),
-                    child: Container(
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: AppColors.bgCardElevated,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: const Center(
-                        child: Text('Cancelar',
-                            style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w600)),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx, true),
-                    child: Container(
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                            color: AppColors.error.withValues(alpha: 0.4)),
-                      ),
-                      child: const Center(
-                        child: Text('Eliminar',
-                            style: TextStyle(
-                                color: AppColors.error,
-                                fontWeight: FontWeight.w700)),
-                      ),
-                    ),
-                  ),
-                ),
-              ]),
-            ],
-          ),
-        ),
-      ),
+    final ok = await showAppConfirm(
+      context,
+      title: '¿Eliminar a $username?',
+      body: 'Dejaréis de ver vuestras rachas y no podréis enviaros ánimos.',
+      confirmLabel: 'Eliminar',
+      destructive: true,
     );
-    if (ok == true && mounted) {
+    if (ok && mounted) {
       try {
         await context.read<FriendsRemoteDataSource>().removeFriend(friendId);
         _load();
@@ -407,28 +252,28 @@ class _FriendsTabState extends State<_FriendsTab> {
   }
 
   void _showSnack(String msg, {bool isError = false, bool isSuccess = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: isError
-          ? AppColors.error
+    AppToast.show(
+      context,
+      msg,
+      type: isError
+          ? AppToastType.error
           : isSuccess
-              ? AppColors.success
-              : null,
-    ));
+              ? AppToastType.success
+              : AppToastType.warning,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-          child: CircularProgressIndicator(color: AppColors.primary));
+      return const AppListSkeleton(circleLeading: true);
     }
     if (_error != null) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_rounded,
+            const Icon(LucideIcons.cloudOff,
                 size: 56, color: AppColors.textMuted),
             const SizedBox(height: 16),
             Text(_error!,
@@ -446,7 +291,7 @@ class _FriendsTabState extends State<_FriendsTab> {
                 ),
                 child: const Text('Reintentar',
                     style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600)),
+                        color: AppColors.onPrimary, fontWeight: FontWeight.w600)),
               ),
             ),
           ],
@@ -473,7 +318,7 @@ class _FriendsTabState extends State<_FriendsTab> {
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.35),
+                        color: Colors.black.withValues(alpha: 0.3),
                         blurRadius: 14,
                         offset: const Offset(0, 4),
                       )
@@ -482,12 +327,12 @@ class _FriendsTabState extends State<_FriendsTab> {
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.person_add_rounded,
-                          color: Colors.white, size: 18),
+                      Icon(LucideIcons.userRoundPlus,
+                          color: AppColors.onPrimary, size: 18),
                       SizedBox(width: 8),
                       Text('Añadir amigo',
                           style: TextStyle(
-                              color: Colors.white,
+                              color: AppColors.onPrimary,
                               fontWeight: FontWeight.w700,
                               fontSize: 14)),
                     ],
@@ -532,7 +377,7 @@ class _FriendsTabState extends State<_FriendsTab> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                            colors: [Color(0xFF1A1000), Color(0xFF0F1623)]),
+                            colors: [Color(0xFF1C1C1C), Color(0xFF171717)]),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                             color: AppColors.primary.withValues(alpha: 0.25)),
@@ -564,7 +409,7 @@ class _FriendsTabState extends State<_FriendsTab> {
                               border: Border.all(
                                   color: AppColors.success.withValues(alpha: 0.4)),
                             ),
-                            child: const Icon(Icons.check_rounded,
+                            child: const Icon(LucideIcons.check,
                                 color: AppColors.success, size: 18),
                           ),
                         ),
@@ -579,7 +424,7 @@ class _FriendsTabState extends State<_FriendsTab> {
                               border: Border.all(
                                   color: AppColors.error.withValues(alpha: 0.4)),
                             ),
-                            child: const Icon(Icons.close_rounded,
+                            child: const Icon(LucideIcons.x,
                                 color: AppColors.error, size: 18),
                           ),
                         ),
@@ -614,7 +459,7 @@ class _FriendsTabState extends State<_FriendsTab> {
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(color: AppColors.border),
                       ),
-                      child: const Icon(Icons.people_outline_rounded,
+                      child: const Icon(LucideIcons.usersRound,
                           size: 40, color: AppColors.textMuted),
                     ),
                     const SizedBox(height: 20),
@@ -684,12 +529,12 @@ class _FriendsTabState extends State<_FriendsTab> {
                               child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.emoji_emotions_rounded,
-                                      color: Colors.white, size: 16),
+                                  Icon(LucideIcons.smile,
+                                      color: AppColors.onPrimary, size: 16),
                                   SizedBox(width: 4),
                                   Text('Motivar',
                                       style: TextStyle(
-                                          color: Colors.white,
+                                          color: AppColors.onPrimary,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700)),
                                 ],
@@ -759,8 +604,7 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-          child: CircularProgressIndicator(color: AppColors.primary));
+      return const AppListSkeleton(circleLeading: true);
     }
 
     if (_error != null) {
@@ -768,7 +612,7 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.leaderboard_rounded,
+            const Icon(LucideIcons.chartColumn,
                 size: 56, color: AppColors.textMuted),
             const SizedBox(height: 16),
             const Text('No se pudo cargar\nla clasificación',
@@ -786,7 +630,7 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
                 ),
                 child: const Text('Reintentar',
                     style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600)),
+                        color: AppColors.onPrimary, fontWeight: FontWeight.w600)),
               ),
             ),
           ],
@@ -811,7 +655,7 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: AppColors.border),
                 ),
-                child: const Icon(Icons.emoji_events_outlined,
+                child: const Icon(LucideIcons.trophy,
                     size: 40, color: AppColors.textMuted),
               ),
               const SizedBox(height: 20),
@@ -852,13 +696,13 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
                 ),
                 child: Row(children: [
                   _ToggleChip(
-                    icon: Icons.local_fire_department_rounded,
+                    icon: LucideIcons.flame,
                     label: 'Rachas',
                     selected: _showStreaks,
                     onTap: () => setState(() => _showStreaks = true),
                   ),
                   _ToggleChip(
-                    icon: Icons.bar_chart_rounded,
+                    icon: LucideIcons.chartBar,
                     label: 'Adherencia',
                     selected: !_showStreaks,
                     onTap: () => setState(() => _showStreaks = false),
@@ -950,7 +794,7 @@ class _ToggleChip extends StatelessWidget {
             boxShadow: selected
                 ? [
                     BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.3),
+                        color: Colors.black.withValues(alpha: 0.3),
                         blurRadius: 8)
                   ]
                 : [],
@@ -962,13 +806,13 @@ class _ToggleChip extends StatelessWidget {
                 Icon(
                   icon,
                   size: 14,
-                  color: selected ? Colors.white : AppColors.textMuted,
+                  color: selected ? AppColors.onPrimary : AppColors.textMuted,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   label,
                   style: TextStyle(
-                    color: selected ? Colors.white : AppColors.textMuted,
+                    color: selected ? AppColors.onPrimary : AppColors.textMuted,
                     fontWeight:
                         selected ? FontWeight.w700 : FontWeight.w500,
                     fontSize: 13,
@@ -1001,7 +845,7 @@ class _Podium extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1A1200), Color(0xFF0F1623)],
+          colors: [Color(0xFF1C1C1C), Color(0xFF171717)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -1104,13 +948,13 @@ class _PodiumSlot extends StatelessWidget {
             border: Border.all(color: color, width: 2),
           ),
           child: rank == 1
-              ? Icon(Icons.emoji_events_rounded, color: color, size: 16)
+              ? Icon(LucideIcons.trophy, color: color, size: 16)
               : Center(
                   child: Text(
                     '$rank',
                     style: TextStyle(
                       color: color,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
                   ),
@@ -1136,7 +980,7 @@ class _PodiumSlot extends StatelessWidget {
             boxShadow: isMe
                 ? [
                     BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.4),
+                        color: Colors.black.withValues(alpha: 0.3),
                         blurRadius: 12)
                   ]
                 : [],
@@ -1146,7 +990,7 @@ class _PodiumSlot extends StatelessWidget {
               username[0].toUpperCase(),
               style: TextStyle(
                 color: isMe ? AppColors.primary : color,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 fontSize: 18,
               ),
             ),
@@ -1260,7 +1104,7 @@ class _LeaderboardRow extends StatelessWidget {
             '$rank',
             style: TextStyle(
               color: isMe ? AppColors.primary : AppColors.textMuted,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               fontSize: 16,
             ),
             textAlign: TextAlign.center,
@@ -1312,7 +1156,7 @@ class _LeaderboardRow extends StatelessWidget {
             mainMetric,
             style: TextStyle(
               color: isMe ? AppColors.primary : AppColors.textPrimary,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               fontSize: 13,
             ),
           ),
@@ -1388,7 +1232,7 @@ class _FriendDetailSheetState extends State<_FriendDetailSheet> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.35),
+                  color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 18,
                 )
               ],
@@ -1396,9 +1240,9 @@ class _FriendDetailSheetState extends State<_FriendDetailSheet> {
             child: Center(
               child: Text(widget.username[0].toUpperCase(),
                   style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.onPrimary,
                       fontSize: 30,
-                      fontWeight: FontWeight.w800)),
+                      fontWeight: FontWeight.w600)),
             ),
           ),
           const SizedBox(height: 14),
@@ -1406,7 +1250,7 @@ class _FriendDetailSheetState extends State<_FriendDetailSheet> {
               style: const TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 20,
-                  fontWeight: FontWeight.w800)),
+                  fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           Text(widget.email,
               style: const TextStyle(
@@ -1463,7 +1307,7 @@ class _FriendDetailSheetState extends State<_FriendDetailSheet> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.4),
+                    color: Colors.black.withValues(alpha: 0.3),
                     blurRadius: 16,
                     offset: const Offset(0, 4),
                   )
@@ -1472,12 +1316,12 @@ class _FriendDetailSheetState extends State<_FriendDetailSheet> {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.emoji_emotions_rounded,
-                      color: Colors.white, size: 22),
+                  Icon(LucideIcons.smile,
+                      color: AppColors.onPrimary, size: 22),
                   SizedBox(width: 10),
                   Text('¡Motivar!',
                       style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.onPrimary,
                           fontWeight: FontWeight.w700,
                           fontSize: 16)),
                 ],
@@ -1499,7 +1343,7 @@ class _FriendDetailSheetState extends State<_FriendDetailSheet> {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.person_remove_rounded,
+                  Icon(LucideIcons.userRoundMinus,
                       color: AppColors.error, size: 18),
                   SizedBox(width: 8),
                   Text('Eliminar amigo',
@@ -1532,7 +1376,7 @@ class _StatChip extends StatelessWidget {
         Text(value,
             style: const TextStyle(
                 color: AppColors.textPrimary,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 fontSize: 15)),
         Text(label,
             style: const TextStyle(
@@ -1569,7 +1413,7 @@ class _Avatar extends StatelessWidget {
         child: Text(
           username[0].toUpperCase(),
           style: TextStyle(
-              color: color, fontWeight: FontWeight.w800, fontSize: 18),
+              color: color, fontWeight: FontWeight.w600, fontSize: 18),
         ),
       ),
     );

@@ -1,11 +1,13 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/ui/ui.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -35,7 +37,7 @@ class _RegisterPageState extends State<RegisterPage>
 
   static const _strengthLabels = ['', 'Débil', 'Mejor', 'Buena', 'Fuerte'];
   static const _strengthColors = [
-    Color(0xFF1E2A45),
+    Color(0xFF262626),
     Color(0xFFFF4444),
     Color(0xFFFAB437),
     Color(0xFFFF8C42),
@@ -117,10 +119,7 @@ class _RegisterPageState extends State<RegisterPage>
 
   void _onRegisterPressed() {
     if (!_acceptedTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Debes aceptar los términos y condiciones'),
-        backgroundColor: AppColors.primary,
-      ));
+      AppToast.show(context, 'Debes aceptar los términos y condiciones', type: AppToastType.warning);
       return;
     }
     if (_formKey.currentState!.validate()) {
@@ -137,10 +136,7 @@ class _RegisterPageState extends State<RegisterPage>
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthErrorState) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(state.message),
-            backgroundColor: AppColors.error,
-          ));
+          AppToast.show(context, state.message, type: AppToastType.error);
         } else if (state is AuthAuthenticatedState) {
           Navigator.of(context).pop();
         }
@@ -206,11 +202,11 @@ class _RegisterPageState extends State<RegisterPage>
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF1A2234).withValues(alpha: 0.6),
+              color: const Color(0xFF1F1F1F).withValues(alpha: 0.6),
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.border),
             ),
-            child: const Icon(Icons.chevron_left,
+            child: const Icon(LucideIcons.chevronLeft,
                 color: AppColors.textPrimary, size: 22),
           ),
         ),
@@ -221,8 +217,7 @@ class _RegisterPageState extends State<RegisterPage>
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 36,
-            fontWeight: FontWeight.w800,
-            fontFamily: 'Syne',
+            fontWeight: FontWeight.w600,
             letterSpacing: -1.0,
             height: 0.95,
           ),
@@ -239,8 +234,7 @@ class _RegisterPageState extends State<RegisterPage>
             style: TextStyle(
               color: Colors.white,
               fontSize: 36,
-              fontWeight: FontWeight.w800,
-              fontFamily: 'Syne',
+              fontWeight: FontWeight.w600,
               letterSpacing: -1.0,
               height: 1.05,
             ),
@@ -263,10 +257,10 @@ class _RegisterPageState extends State<RegisterPage>
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2234).withValues(alpha: 0.62),
+        color: const Color(0xFF1F1F1F).withValues(alpha: 0.62),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.18),
+          color: AppColors.primary.withValues(alpha: 0.08),
         ),
         boxShadow: [
           BoxShadow(
@@ -287,7 +281,7 @@ class _RegisterPageState extends State<RegisterPage>
               style: const TextStyle(color: AppColors.textPrimary),
               decoration: const InputDecoration(
                 labelText: 'Correo electrónico',
-                prefixIcon: Icon(Icons.email_outlined),
+                prefixIcon: Icon(LucideIcons.mail),
               ),
               validator: Validators.validateEmail,
               enabled: !isLoading,
@@ -298,7 +292,7 @@ class _RegisterPageState extends State<RegisterPage>
               style: const TextStyle(color: AppColors.textPrimary),
               decoration: const InputDecoration(
                 labelText: 'Nombre de usuario',
-                prefixIcon: Icon(Icons.person_outline),
+                prefixIcon: Icon(LucideIcons.userRound),
               ),
               validator: Validators.validateUsername,
               enabled: !isLoading,
@@ -310,11 +304,11 @@ class _RegisterPageState extends State<RegisterPage>
               style: const TextStyle(color: AppColors.textPrimary),
               decoration: InputDecoration(
                 labelText: 'Contraseña',
-                prefixIcon: const Icon(Icons.lock_outline),
+                prefixIcon: const Icon(LucideIcons.lock),
                 suffixIcon: IconButton(
                   icon: Icon(_obscurePassword
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined),
+                      ? LucideIcons.eye
+                      : LucideIcons.eyeOff),
                   onPressed: () =>
                       setState(() => _obscurePassword = !_obscurePassword),
                 ),
@@ -413,7 +407,7 @@ class _RegisterPageState extends State<RegisterPage>
                 gradient: _acceptedTerms ? AppGradients.brand : null,
                 color: _acceptedTerms
                     ? null
-                    : const Color(0xFF1E2A45).withValues(alpha: 0.7),
+                    : const Color(0xFF262626).withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(
                   color: _acceptedTerms ? Colors.transparent : AppColors.border,
@@ -421,7 +415,7 @@ class _RegisterPageState extends State<RegisterPage>
                 boxShadow: _acceptedTerms
                     ? [
                         BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.4),
+                          color: Colors.black.withValues(alpha: 0.3),
                           blurRadius: 14,
                         )
                       ]
@@ -438,7 +432,7 @@ class _RegisterPageState extends State<RegisterPage>
                       width: 20,
                       height: 20,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: _acceptedTerms ? AppColors.onPrimary : Colors.white,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -519,7 +513,7 @@ class _RegBlobPainter extends CustomPainter {
     final p2 = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppColors.primary.withValues(alpha: 0.2),
+          AppColors.primary.withValues(alpha: 0.05),
           AppColors.primary.withValues(alpha: 0),
         ],
       ).createShader(Rect.fromCircle(
@@ -625,7 +619,7 @@ class _AnimatedRegButtonState extends State<_AnimatedRegButton>
               boxShadow: enabled
                   ? [
                       BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.5),
+                        color: Colors.black.withValues(alpha: 0.3),
                         blurRadius: 20,
                         offset: const Offset(0, 6),
                         spreadRadius: 1,
@@ -641,16 +635,15 @@ class _AnimatedRegButtonState extends State<_AnimatedRegButton>
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2.5, color: Colors.white),
+                        strokeWidth: 2.5, color: AppColors.onPrimary),
                   )
                 : Text(
                     widget.label,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.onPrimary,
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
                       letterSpacing: 0.3,
-                      fontFamily: 'Syne',
                     ),
                   ),
           ),

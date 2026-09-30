@@ -1,13 +1,14 @@
 /// Constantes para la API del backend
 class ApiConstants {
-  // Producción
-  static const String baseUrl = 'https://mysupple.abacusai.app';
-
-  // Desarrollo local (Chrome / desktop):
-  // static const String baseUrl = 'http://localhost:3000';
-
-  // Emulador Android:
-  // static const String baseUrl = 'http://10.0.2.2:3000';
+  /// URL del backend. Se elige al lanzar la app, sin tocar código:
+  ///
+  ///   flutter run --dart-define=API_URL=http://10.0.2.2:3000     (emulador → backend en tu PC)
+  ///   flutter run --dart-define=API_URL=http://192.168.X.X:3000  (móvil físico, misma WiFi)
+  ///   flutter run                                                 (por defecto: producción Abacus)
+  static const String baseUrl = String.fromEnvironment(
+    'API_URL',
+    defaultValue: 'https://mysupple.abacusai.app',
+  );
   
   // Auth endpoints
   static const String register = '/auth/register';

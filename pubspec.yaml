@@ -30,13 +30,16 @@ dependencies:
   flutter_timezone: ^5.0.0
 
   # Utils
-  intl: ^0.18.1
+  intl: 0.20.3
   logger: ^2.0.2
 
   # UI
-  google_fonts: ^6.1.0
   flutter_svg: ^2.0.9
   flutter_animate: ^4.5.0
+  lucide_icons_flutter: ^3.1.20
+  forui: 0.27.2
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
@@ -45,9 +48,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/gifs/8fdb05aca4211c1886b200259514422b.gif
-    - assets/gifs/descarga.gif
-    - assets/gifs/hasbulla-fire.gif
-    - assets/gifs/hasbulla-hasbullah.gif
-    - assets/gifs/hasbulla.gif

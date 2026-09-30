@@ -81,4 +81,14 @@ class LocalStorageDataSource {
   String getBio() {
     return _prefs.getString('user_bio') ?? '';
   }
+
+  // ── Tutorial inicial con Capsu ────────────────────────────────────────────
+
+  bool isOnboardingDone() {
+    return _prefs.getBool('onboarding_done') ?? false;
+  }
+
+  Future<void> setOnboardingDone() async {
+    await _prefs.setBool('onboarding_done', true);
+  }
 }

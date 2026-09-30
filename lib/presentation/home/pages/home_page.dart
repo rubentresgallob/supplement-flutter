@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
@@ -12,6 +13,8 @@ import '../../auth/bloc/auth_state.dart';
 import '../../friends/pages/friends_page.dart';
 import '../../profile/pages/profile_page.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/mascot/capsu.dart';
+import '../../../core/widgets/ui/ui.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../data/datasources/supplements_remote_datasource.dart';
 import '../../../data/datasources/local_storage_datasource.dart';
@@ -41,8 +44,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _fabPulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
-    )..repeat();
+    );
     _fabPulse = CurvedAnimation(parent: _fabPulseCtrl, curve: Curves.easeOut);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Pulso del FAB desactivado si el usuario pide reducir movimiento
+    if (AppMotion.reduced(context)) {
+      _fabPulseCtrl.stop();
+    } else if (!_fabPulseCtrl.isAnimating) {
+      _fabPulseCtrl.repeat();
+    }
   }
 
   @override
@@ -112,7 +126,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
         child: Container(
           decoration: const BoxDecoration(
-            color: Color(0xD9070B18),
+            color: Color(0xD9121212),
             border: Border(top: BorderSide(color: AppColors.border)),
           ),
           child: SafeArea(
@@ -122,22 +136,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               child: Row(
                 children: [
                   _NavItem(
-                    icon: Icons.local_fire_department_outlined,
-                    activeIcon: Icons.local_fire_department_rounded,
+                    icon: LucideIcons.flame,
+                    activeIcon: LucideIcons.flame,
                     label: 'Suplementos',
                     isActive: _currentTab == 0,
                     onTap: () => setState(() => _currentTab = 0),
                   ),
                   _NavItem(
-                    icon: Icons.people_outline,
-                    activeIcon: Icons.people_rounded,
+                    icon: LucideIcons.usersRound,
+                    activeIcon: LucideIcons.usersRound,
                     label: 'Amigos',
                     isActive: _currentTab == 1,
                     onTap: () => setState(() => _currentTab = 1),
                   ),
                   _NavItem(
-                    icon: Icons.person_outline,
-                    activeIcon: Icons.person_rounded,
+                    icon: LucideIcons.userRound,
+                    activeIcon: LucideIcons.userRound,
                     label: 'Perfil',
                     isActive: _currentTab == 2,
                     onTap: () => setState(() => _currentTab = 2),
@@ -174,33 +188,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ],
         );
       },
-      child: GestureDetector(
+      child: Semantics(
+        button: true,
+        label: 'Añadir suplemento',
+        child: GestureDetector(
         onTap: _openAddSupplement,
         child: Container(
           width: 60,
           height: 60,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              colors: [Color(0xFFFF3D00), Color(0xFFFF6B35), Color(0xFFFAB437)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: AppColors.primary,
+            border: Border.all(color: Colors.white),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFFF3D00).withValues(alpha: 0.55),
-                blurRadius: 32,
-                offset: const Offset(0, 12),
-              ),
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.12),
-                blurRadius: 0,
-                spreadRadius: 4,
+                color: Colors.black.withValues(alpha: 0.5),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
-          child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+          child: const Icon(LucideIcons.plus, color: AppColors.onPrimary, size: 28),
         ),
+      ),
       ),
     );
   }
@@ -231,7 +241,7 @@ class _ConfettiParticle {
         rotationSpeed = (rng.nextDouble() - 0.5) * 12,
         isCircle = rng.nextBool(),
         color = const [
-          AppColors.primary,
+          AppColors.accent,
           AppColors.gold,
           AppColors.success,
           Colors.white,
@@ -251,21 +261,11 @@ class _CelebrationOverlayState extends State<_CelebrationOverlay>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   late final List<_ConfettiParticle> _particles;
-  late final String _gifPath;
-
-  static const _gifs = [
-    'assets/gifs/8fdb05aca4211c1886b200259514422b.gif',
-    'assets/gifs/descarga.gif',
-    'assets/gifs/hasbulla-fire.gif',
-    'assets/gifs/hasbulla-hasbullah.gif',
-    'assets/gifs/hasbulla.gif',
-  ];
 
   @override
   void initState() {
     super.initState();
     final rng = math.Random();
-    _gifPath = _gifs[rng.nextInt(_gifs.length)];
     _particles = List.generate(70, (_) => _ConfettiParticle(rng));
     _ctrl = AnimationController(
       vsync: this,
@@ -314,44 +314,23 @@ class _CelebrationOverlayState extends State<_CelebrationOverlay>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // GIF animado aleatorio
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.7),
-                                blurRadius: 48,
-                                spreadRadius: 8,
-                              ),
-                              BoxShadow(
-                                color: AppColors.gold.withValues(alpha: 0.4),
-                                blurRadius: 72,
-                                spreadRadius: 12,
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(28),
-                            child: Image.asset(
-                              _gifPath,
-                              width: 250,
-                              height: 250,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+                        // Capsu celebrando
+                        const Capsu(
+                          size: 170,
+                          mood: CapsuMood.celebrate,
+                          interactive: false,
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 8),
                         // Badge de texto
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 28, vertical: 14),
                           decoration: BoxDecoration(
-                            gradient: AppGradients.brand,
+                            gradient: AppGradients.accent,
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.55),
+                                color: AppColors.accent.withValues(alpha: 0.55),
                                 blurRadius: 28,
                                 spreadRadius: 4,
                               ),
@@ -363,15 +342,15 @@ class _CelebrationOverlayState extends State<_CelebrationOverlay>
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.local_fire_department_rounded,
-                                      color: Colors.white, size: 22),
+                                  Icon(LucideIcons.flame,
+                                      color: AppColors.onPrimary, size: 22),
                                   SizedBox(width: 8),
                                   Text(
                                     '¡Racha del día!',
                                     style: TextStyle(
-                                      color: Colors.white,
+                                      color: AppColors.onPrimary,
                                       fontSize: 22,
-                                      fontWeight: FontWeight.w900,
+                                      fontWeight: FontWeight.w700,
                                       letterSpacing: -0.5,
                                     ),
                                   ),
@@ -381,7 +360,7 @@ class _CelebrationOverlayState extends State<_CelebrationOverlay>
                               Text(
                                 'Todos los suplementos tomados',
                                 style: TextStyle(
-                                  color: Colors.white70,
+                                  color: Color(0xB31A0B02),
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -497,7 +476,12 @@ class _NavItemState extends State<_NavItem>
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: GestureDetector(
+      child: Semantics(
+        button: true,
+        selected: widget.isActive,
+        label: widget.label,
+        excludeSemantics: true,
+        child: GestureDetector(
         onTap: _handleTap,
         behavior: HitTestBehavior.opaque,
         child: Column(
@@ -520,7 +504,7 @@ class _NavItemState extends State<_NavItem>
                             shape: BoxShape.circle,
                             gradient: RadialGradient(
                               colors: [
-                                AppColors.primary.withValues(alpha: 0.35),
+                                AppColors.primary.withValues(alpha: 0.10),
                                 Colors.transparent,
                               ],
                             ),
@@ -543,11 +527,10 @@ class _NavItemState extends State<_NavItem>
               style: TextStyle(
                 color:
                     widget.isActive ? AppColors.primary : AppColors.textMuted,
-                fontSize: 9,
+                fontSize: 11,
                 fontWeight:
                     widget.isActive ? FontWeight.w700 : FontWeight.w400,
                 letterSpacing: 0.08,
-                fontFamily: 'Syne',
               ),
               child: Text(widget.label),
             ),
@@ -564,7 +547,7 @@ class _NavItemState extends State<_NavItem>
                 boxShadow: widget.isActive
                     ? [
                         BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.7),
+                          color: Colors.black.withValues(alpha: 0.3),
                           blurRadius: 6,
                         )
                       ]
@@ -573,6 +556,7 @@ class _NavItemState extends State<_NavItem>
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -597,7 +581,7 @@ class _ProgressRingPainter extends CustomPainter {
       center,
       radius,
       Paint()
-        ..color = const Color(0xFF1E2A45).withValues(alpha: 0.7)
+        ..color = const Color(0xFF262626).withValues(alpha: 0.7)
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth,
     );
@@ -613,7 +597,7 @@ class _ProgressRingPainter extends CustomPainter {
       sweepAngle,
       false,
       Paint()
-        ..color = AppColors.primary.withValues(alpha: 0.35)
+        ..color = AppColors.accent.withValues(alpha: 0.35)
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth + 6
         ..strokeCap = StrokeCap.round
@@ -676,8 +660,7 @@ class _ProgressRing extends StatelessWidget {
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    fontFamily: 'Syne',
+                    fontWeight: FontWeight.w600,
                     height: 1,
                   ),
                 ),
@@ -687,7 +670,6 @@ class _ProgressRing extends StatelessWidget {
                     color: AppColors.textSecondary,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    fontFamily: 'Syne',
                     height: 1.2,
                   ),
                 ),
@@ -713,10 +695,7 @@ class _SupplementsTab extends StatelessWidget {
     return BlocConsumer<HomeBloc, HomeState>(
       listener: (context, state) {
         if (state is HomeErrorState) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(state.message),
-            backgroundColor: AppColors.error,
-          ));
+          AppToast.error(context, state.message);
         }
       },
       builder: (context, state) {
@@ -744,35 +723,24 @@ class _SupplementsTab extends StatelessWidget {
 
             // States
             if (state is HomeLoadingState)
-              SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 48,
-                        height: 48,
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                          strokeWidth: 3,
-                          backgroundColor:
-                              AppColors.primary.withValues(alpha: 0.15),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Cargando suplementos...',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
+              const SliverToBoxAdapter(child: _HomeSkeleton())
             else if (state is HomeEmptyState)
-              SliverFillRemaining(child: _buildEmpty(context))
+              SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: AppEmpty(
+                      media: const Capsu(size: 96, mood: CapsuMood.wave),
+                      icon: LucideIcons.flame,
+                      title: 'Tu stack está vacío',
+                      description:
+                          'Añade tu primer suplemento y empieza a construir tu racha diaria.',
+                      action: AppButton(
+                        label: 'Añadir suplemento',
+                        icon: LucideIcons.plus,
+                        onPressed: onAddPressed,
+                      ),
+                    ),
+                  ))
             else if (state is HomeLoadedState) ...[
               // Section header
               SliverToBoxAdapter(
@@ -788,8 +756,7 @@ class _SupplementsTab extends StatelessWidget {
                         style: TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          fontFamily: 'Syne',
+                          fontWeight: FontWeight.w600,
                           letterSpacing: -0.1,
                         ),
                       ),
@@ -911,8 +878,7 @@ class _SupplementsTab extends StatelessWidget {
                       style: const TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'Syne',
+                        fontWeight: FontWeight.w600,
                         letterSpacing: -0.2,
                       ),
                       maxLines: 1,
@@ -958,7 +924,7 @@ class _SupplementsTab extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.primary.withValues(alpha: 0.22),
+                    AppColors.accent.withValues(alpha: 0.22),
                     Colors.transparent,
                   ],
                 ),
@@ -990,8 +956,7 @@ class _SupplementsTab extends StatelessWidget {
                       style: const TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'Syne',
+                        fontWeight: FontWeight.w600,
                         letterSpacing: -0.2,
                         height: 1.1,
                       ),
@@ -1021,61 +986,72 @@ class _SupplementsTab extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildEmpty(BuildContext context) {
-    return Center(
+// ─── Skeleton de carga ───────────────────────────────────────────────────────
+
+class _HomeSkeleton extends StatelessWidget {
+  const _HomeSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSkeletonGroup(
       child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0, end: 1),
-          duration: const Duration(milliseconds: 700),
-          curve: Curves.easeOutBack,
-          builder: (context, v, child) => Opacity(
-            opacity: v.clamp(0.0, 1.0),
-            child: Transform.scale(scale: v.clamp(0.0, 1.5), child: child),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Tarjeta de progreso
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: AppDecorations.frame(color: AppColors.bgCardElevated.withValues(alpha: 0.7)),
+              child: const Row(
+                children: [
+                  AppSkeleton.circle(size: 92),
+                  SizedBox(width: 18),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AppSkeleton(width: 40, height: 10),
+                        SizedBox(height: 10),
+                        AppSkeleton(width: 150, height: 20),
+                        SizedBox(height: 10),
+                        AppSkeleton(width: 190, height: 12),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+            const AppSkeleton(width: 90, height: 18),
+            const SizedBox(height: 14),
+            for (var i = 0; i < 3; i++) ...[
               Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primary.withValues(alpha: 0.18),
-                      AppColors.gold.withValues(alpha: 0.08),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: const Icon(Icons.local_fire_department_rounded,
-                    size: 44, color: AppColors.primary),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Sin suplementos aún',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
+                padding: const EdgeInsets.all(16),
+                decoration: AppDecorations.frame(),
+                child: const Row(
+                  children: [
+                    AppSkeleton(width: 48, height: 48, radius: AppRadius.xl),
+                    SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppSkeleton(width: 130, height: 14),
+                          SizedBox(height: 8),
+                          AppSkeleton(width: 90, height: 11),
+                        ],
+                      ),
+                    ),
+                    AppSkeleton(width: 44, height: 44, radius: AppRadius.lg),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Toca el botón + para añadir\ntu primer suplemento',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                  height: 1.5,
-                ),
-              ),
+              const SizedBox(height: 12),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -1101,10 +1077,10 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
     'mg', 'g', 'µg', 'UI', 'ml', 'cápsulas', 'comprimidos',
   ];
   static const _scheduleOptions = [
-    ('mañana',   Icons.wb_sunny_outlined,  'Mañana'),
-    ('mediodía', Icons.wb_cloudy_outlined, 'Mediodía'),
-    ('tarde',    Icons.cloud_outlined,     'Tarde'),
-    ('noche',    Icons.nightlight_outlined,'Noche'),
+    ('mañana',   LucideIcons.sun,  'Mañana'),
+    ('mediodía', LucideIcons.cloudSun, 'Mediodía'),
+    ('tarde',    LucideIcons.sunset,     'Tarde'),
+    ('noche',    LucideIcons.moon,'Noche'),
   ];
 
   final _formKey = GlobalKey<FormState>();
@@ -1186,6 +1162,8 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
           time: notifTime,
         );
       } else {
+        // Borrar también la hora guardada: si no, la Home lo volvía a programar
+        await localStorageDs.removeNotificationTime(supId);
         await NotificationService.cancelReminder(
           NotificationService.idFromSupplementId(supId),
         );
@@ -1203,34 +1181,31 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
   }
 
   Future<void> _pickNotificationTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _notificationTime ?? const TimeOfDay(hour: 9, minute: 0),
-      builder: (ctx, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: AppColors.primary,
-            surface: AppColors.bgCardElevated,
-            onSurface: AppColors.textPrimary,
-          ),
-          timePickerTheme: TimePickerThemeData(
-            backgroundColor: AppColors.bgCard,
-            dialBackgroundColor: AppColors.bgCardElevated,
-            hourMinuteColor: AppColors.bgCardElevated,
-          ),
-        ),
-        child: child!,
-      ),
-    );
-    if (picked != null) setState(() => _notificationTime = picked);
+    final picked =
+        await showReminderTimePicker(context, initial: _notificationTime);
+    if (picked == null || !mounted) return;
+    setState(() => _notificationTime = picked);
+    // Pedimos permiso justo cuando el usuario quiere un recordatorio
+    final allowed = await NotificationService.ensurePermissions();
+    if (!allowed && mounted) {
+      AppToast.show(
+        context,
+        'Activa las notificaciones de la app en Ajustes para recibir el recordatorio',
+        type: AppToastType.warning,
+      );
+    }
   }
 
   void _snack(String msg, {bool isError = false, bool isSuccess = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor:
-          isError ? AppColors.error : isSuccess ? AppColors.success : null,
-    ));
+    AppToast.show(
+      context,
+      msg,
+      type: isError
+          ? AppToastType.error
+          : isSuccess
+              ? AppToastType.success
+              : AppToastType.warning,
+    );
   }
 
   @override
@@ -1239,7 +1214,9 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        border: Border(top: BorderSide(color: AppColors.hairline)),
       ),
       padding: EdgeInsets.fromLTRB(24, 8, 24, 24 + bottom),
       child: SingleChildScrollView(
@@ -1265,7 +1242,7 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
                 style: const TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 20,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   letterSpacing: -0.3,
                 ),
               ),
@@ -1280,41 +1257,14 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
-                runSpacing: 6,
-                children: _allForms.map((f) {
-                  final sel = _selectedForm == f;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedForm = f),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        gradient: sel ? AppGradients.brand : null,
-                        color: sel ? null : AppColors.bgCardElevated,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                            color:
-                                sel ? Colors.transparent : AppColors.border),
-                        boxShadow: sel
-                            ? [
-                                BoxShadow(
-                                    color: AppColors.primary
-                                        .withValues(alpha: 0.3),
-                                    blurRadius: 8)
-                              ]
-                            : [],
-                      ),
-                      child: Text(f,
-                          style: TextStyle(
-                            color:
-                                sel ? Colors.white : AppColors.textSecondary,
-                            fontWeight:
-                                sel ? FontWeight.w700 : FontWeight.w400,
-                            fontSize: 13,
-                          )),
-                    ),
-                  );
-                }).toList(),
+                runSpacing: 8,
+                children: _allForms
+                    .map((f) => AppToggleChip(
+                          label: f,
+                          selected: _selectedForm == f,
+                          onChanged: (_) => setState(() => _selectedForm = f),
+                        ))
+                    .toList(),
               ),
               const SizedBox(height: 20),
 
@@ -1360,59 +1310,16 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
-                runSpacing: 6,
+                runSpacing: 8,
                 children: _scheduleOptions.map((opt) {
                   final (value, icon, label) = opt;
-                  final sel = _schedules.contains(value);
-                  return GestureDetector(
-                    onTap: () => setState(() {
-                      if (sel) {
-                        _schedules.remove(value);
-                      } else {
-                        _schedules.add(value);
-                      }
+                  return AppToggleChip(
+                    label: label,
+                    icon: icon,
+                    selected: _schedules.contains(value),
+                    onChanged: (sel) => setState(() {
+                      sel ? _schedules.add(value) : _schedules.remove(value);
                     }),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        gradient: sel ? AppGradients.brand : null,
-                        color: sel ? null : AppColors.bgCardElevated,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                            color:
-                                sel ? Colors.transparent : AppColors.border),
-                        boxShadow: sel
-                            ? [
-                                BoxShadow(
-                                    color: AppColors.primary
-                                        .withValues(alpha: 0.3),
-                                    blurRadius: 8)
-                              ]
-                            : [],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(icon,
-                              size: 14,
-                              color: sel
-                                  ? Colors.white
-                                  : AppColors.textSecondary),
-                          const SizedBox(width: 6),
-                          Text(label,
-                              style: TextStyle(
-                                color: sel
-                                    ? Colors.white
-                                    : AppColors.textSecondary,
-                                fontWeight: sel
-                                    ? FontWeight.w700
-                                    : FontWeight.w400,
-                                fontSize: 13,
-                              )),
-                        ],
-                      ),
-                    ),
                   );
                 }).toList(),
               ),
@@ -1421,68 +1328,17 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
               _SectionLabel('Tomas por día'),
               const SizedBox(height: 8),
               if (_isPillUnit)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.07),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(children: [
-                    const Icon(Icons.info_outline_rounded,
-                        size: 16, color: AppColors.primary),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Cada ${_dosageUnit == 'cápsulas' ? 'cápsula' : 'comprimido'} cuenta como 1 toma — total: $_computedTimesPerDay tomas al día',
-                        style: const TextStyle(
-                            color: AppColors.textSecondary, fontSize: 13),
-                      ),
-                    ),
-                  ]),
+                AppAlert(
+                  message:
+                      'Cada ${_dosageUnit == 'cápsulas' ? 'cápsula' : 'comprimido'} cuenta como 1 toma — total: $_computedTimesPerDay tomas al día',
                 )
               else
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgCardElevated,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        onPressed: _timesPerDay > 1
-                            ? () => setState(() => _timesPerDay--)
-                            : null,
-                        icon: const Icon(Icons.remove_rounded),
-                        color: _timesPerDay > 1
-                            ? AppColors.primary
-                            : AppColors.textMuted,
-                      ),
-                      Text(
-                        '$_timesPerDay ${_timesPerDay == 1 ? 'vez al día' : 'veces al día'}',
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: _timesPerDay < 20
-                            ? () => setState(() => _timesPerDay++)
-                            : null,
-                        icon: const Icon(Icons.add_rounded),
-                        color: _timesPerDay < 20
-                            ? AppColors.primary
-                            : AppColors.textMuted,
-                      ),
-                    ],
-                  ),
+                AppNumberField(
+                  value: _timesPerDay,
+                  min: 1,
+                  max: 20,
+                  format: (v) => '$v ${v == 1 ? 'vez al día' : 'veces al día'}',
+                  onChanged: (v) => setState(() => _timesPerDay = v),
                 ),
               const SizedBox(height: 20),
 
@@ -1507,8 +1363,8 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
                   child: Row(children: [
                     Icon(
                       _notificationTime != null
-                          ? Icons.notifications_active_rounded
-                          : Icons.notifications_none_rounded,
+                          ? LucideIcons.bellRing
+                          : LucideIcons.bell,
                       color: _notificationTime != null
                           ? AppColors.primary
                           : AppColors.textMuted,
@@ -1529,50 +1385,29 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
                       ),
                     ),
                     if (_notificationTime != null)
-                      GestureDetector(
-                        onTap: () =>
-                            setState(() => _notificationTime = null),
-                        child: const Icon(Icons.close_rounded,
-                            color: AppColors.textMuted, size: 18),
+                      SizedBox(
+                        width: AppSpacing.minTouch,
+                        height: AppSpacing.minTouch,
+                        child: IconButton(
+                          tooltip: 'Quitar recordatorio',
+                          padding: EdgeInsets.zero,
+                          onPressed: () =>
+                              setState(() => _notificationTime = null),
+                          icon: const Icon(LucideIcons.x,
+                              color: AppColors.textMuted, size: 18),
+                        ),
                       ),
                   ]),
                 ),
               ),
               const SizedBox(height: 28),
 
-              GestureDetector(
-                onTap: _saving ? null : _save,
-                child: Container(
-                  height: 54,
-                  decoration: BoxDecoration(
-                    gradient: _saving ? null : AppGradients.brand,
-                    color: _saving ? AppColors.bgCardElevated : null,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: _saving
-                        ? []
-                        : [
-                            BoxShadow(
-                              color:
-                                  AppColors.primary.withValues(alpha: 0.4),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
-                            )
-                          ],
-                  ),
-                  child: Center(
-                    child: _saving
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2.5, color: Colors.white))
-                        : const Text('Guardar cambios',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16)),
-                  ),
-                ),
+              AppButton(
+                label: 'Guardar cambios',
+                size: AppButtonSize.lg,
+                expand: true,
+                loading: _saving,
+                onPressed: _save,
               ),
             ],
           ),

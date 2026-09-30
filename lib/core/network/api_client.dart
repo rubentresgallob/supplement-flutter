@@ -143,13 +143,31 @@ class ApiClient {
     }
     
     final statusCode = error.response?.statusCode;
-    final message = error.response?.data['message'] ?? 'Error desconocido';
-    
+    final data = error.response?.data;
+    final rawMessage = data is Map ? data['message'] : null;
+    // class-validator devuelve una lista de mensajes en los 400
+    final String message = rawMessage is List
+        ? rawMessage.join('\n')
+        : (rawMessage?.toString() ?? 'Error desconocido');
+    final path = error.requestOptions.path;
+
     switch (statusCode) {
       case 400:
         return ValidationException(message);
       case 401:
+        // En login/registro un 401 son credenciales incorrectas, no una sesión caducada
+        if (path == ApiConstants.login || path == ApiConstants.register) {
+          return AuthException('Email o contraseña incorrectos.');
+        }
         return AuthException('Sesión expirada. Por favor, inicia sesión nuevamente.');
+      case 409:
+        if (message.contains('Email')) {
+          return ValidationException('Ya existe una cuenta con ese email.');
+        }
+        if (message.contains('Username')) {
+          return ValidationException('Ese nombre de usuario ya está en uso.');
+        }
+        return ValidationException(message);
       case 404:
         return NotFoundException(message);
       case 500:

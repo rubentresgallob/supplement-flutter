@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../domain/entities/streak.dart';
 import '../../../core/constants/app_constants.dart';
 
@@ -64,14 +65,14 @@ class _StreakBadgeState extends State<StreakBadge>
             borderRadius: BorderRadius.circular(999),
             border: Border.all(
               color: active
-                  ? AppColors.primary
+                  ? AppColors.accent
                       .withValues(alpha: 0.35 + 0.2 * _glowAnim.value)
                   : AppColors.border,
             ),
             boxShadow: active
                 ? [
                     BoxShadow(
-                      color: AppColors.primary
+                      color: AppColors.accent
                           .withValues(alpha: 0.1 + 0.15 * _glowAnim.value),
                       blurRadius: 14 + 6 * _glowAnim.value,
                       spreadRadius: 1,
@@ -86,7 +87,7 @@ class _StreakBadgeState extends State<StreakBadge>
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.local_fire_department_rounded,
+            LucideIcons.flame,
             color: active ? AppColors.neonGold : AppColors.textMuted,
             size: 16,
           ),
@@ -100,7 +101,7 @@ class _StreakBadgeState extends State<StreakBadge>
               style: TextStyle(
                 color: active ? Colors.white : AppColors.textMuted,
                 fontSize: 14,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 letterSpacing: 0.02,
               ),
             ),
