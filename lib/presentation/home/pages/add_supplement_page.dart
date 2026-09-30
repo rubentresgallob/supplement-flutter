@@ -290,10 +290,10 @@ class _CatalogTile extends StatelessWidget {
                 color: colors[0],
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                    color: (colors[1] as Color).withValues(alpha: 0.3)),
+                    color: colors[1].withValues(alpha: 0.3)),
               ),
               child: Icon(_icon(supplement.category),
-                  color: colors[1] as Color, size: 22),
+                  color: colors[1], size: 22),
             ),
             const SizedBox(width: 14),
             Expanded(

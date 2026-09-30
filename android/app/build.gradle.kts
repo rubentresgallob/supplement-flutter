@@ -46,7 +46,9 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            // Sin key.properties (p. ej. en Codemagic) se firma con la clave debug para poder probar el APK
+            signingConfig = if (keystorePropertiesFile.exists()) signingConfigs.getByName("release")
+                            else signingConfigs.getByName("debug")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

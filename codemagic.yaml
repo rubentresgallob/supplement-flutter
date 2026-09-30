@@ -1,0 +1,37 @@
+workflows:
+  # Fase 1: análisis + tests + APK de prueba contra producción
+  android-test:
+    name: Android - tests y APK
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      flutter: stable
+      java: 17
+      vars:
+        API_URL: https://mysupple.abacusai.app
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+    scripts:
+      - name: Instalar dependencias
+        script: flutter pub get
+      - name: Análisis de código
+        script: flutter analyze --no-fatal-infos
+      - name: Tests
+        script: |
+          mkdir -p test-results
+          flutter test --machine > test-results/flutter.json
+        test_report: test-results/flutter.json
+      - name: Generar APK
+        script: flutter build apk --release --dart-define=API_URL=$API_URL
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+    publishing:
+      email:
+        recipients:
+          - rubentresgallo9@gmail.com
+        notify:
+          success: true
+          failure: true
