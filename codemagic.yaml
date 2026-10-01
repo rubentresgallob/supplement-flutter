@@ -8,7 +8,7 @@ workflows:
       flutter: stable
       java: 17
       vars:
-        API_URL: https://mysupple.abacusai.app
+        API_URL: https://supplement-backend.onrender.com # backend en Render
     triggering:
       events:
         - push

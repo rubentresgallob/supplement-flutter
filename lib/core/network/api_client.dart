@@ -17,8 +17,10 @@ class ApiClient {
     _dio = Dio(
       BaseOptions(
         baseUrl: ApiConstants.baseUrl,
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
+        // Render gratis "duerme" el servidor tras 15 min sin uso:
+        // la primera petición puede tardar ~50 s en despertarlo.
+        connectTimeout: const Duration(seconds: 70),
+        receiveTimeout: const Duration(seconds: 70),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -135,7 +137,8 @@ class ApiClient {
     if (error.type == DioExceptionType.connectionTimeout ||
         error.type == DioExceptionType.receiveTimeout ||
         error.type == DioExceptionType.sendTimeout) {
-      return NetworkException('Tiempo de espera agotado. Verifica tu conexión a internet.');
+      return NetworkException(
+          'El servidor está tardando en responder (puede estar despertando). Inténtalo de nuevo en unos segundos.');
     }
     
     if (error.type == DioExceptionType.connectionError) {

@@ -4,10 +4,10 @@ class ApiConstants {
   ///
   ///   flutter run --dart-define=API_URL=http://10.0.2.2:3000     (emulador → backend en tu PC)
   ///   flutter run --dart-define=API_URL=http://192.168.X.X:3000  (móvil físico, misma WiFi)
-  ///   flutter run                                                 (por defecto: producción Abacus)
+  ///   flutter run                                                 (por defecto: producción en Render)
   static const String baseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'https://mysupple.abacusai.app',
+    defaultValue: 'https://supplement-backend.onrender.com',
   );
   
   // Auth endpoints
