@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/mascot/capsu.dart';
 import '../../../core/widgets/ui/ui.dart';
+import '../../../core/utils/legal_links.dart';
 import '../../../data/models/pro_models.dart';
 import '../../rewards/bloc/rewards_cubit.dart';
 import '../bloc/pro_cubit.dart';
@@ -170,6 +171,22 @@ class _ProPageState extends State<ProPage> {
                               'Se renueva automáticamente. Cancela cuando quieras desde tu tienda de apps.',
                               textAlign: TextAlign.center,
                               style: TextStyle(color: AppColors.textMuted, fontSize: 11),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                TextButton(
+                                  onPressed: () => openLegalPage(context, LegalPage.terms),
+                                  child: const Text('Términos',
+                                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                                ),
+                                const Text('·', style: TextStyle(color: AppColors.textMuted)),
+                                TextButton(
+                                  onPressed: () => openLegalPage(context, LegalPage.privacy),
+                                  child: const Text('Privacidad',
+                                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                                ),
+                              ],
                             ),
                           ],
                         ),

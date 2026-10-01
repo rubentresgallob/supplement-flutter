@@ -22,6 +22,8 @@ class AuthRemoteDataSource {
         'email': email,
         'password': password,
         'username': username,
+        // La pantalla de registro no deja continuar sin aceptar (consentimiento RGPD)
+        'acceptTerms': true,
       },
     );
     

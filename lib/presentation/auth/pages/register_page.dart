@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +9,7 @@ import '../bloc/auth_state.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/ui/ui.dart';
+import '../../../core/utils/legal_links.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -24,6 +26,12 @@ class _RegisterPageState extends State<RegisterPage>
   final _usernameController = TextEditingController();
   bool _obscurePassword = true;
   bool _acceptedTerms = false;
+
+  // Enlaces del texto de consentimiento
+  late final _termsTap = TapGestureRecognizer()
+    ..onTap = () => openLegalPage(context, LegalPage.terms);
+  late final _privacyTap = TapGestureRecognizer()
+    ..onTap = () => openLegalPage(context, LegalPage.privacy);
 
   late final AnimationController _blobCtrl;
   late final AnimationController _entranceCtrl;
@@ -114,12 +122,14 @@ class _RegisterPageState extends State<RegisterPage>
     _blobCtrl.dispose();
     _entranceCtrl.dispose();
     _shimmerCtrl.dispose();
+    _termsTap.dispose();
+    _privacyTap.dispose();
     super.dispose();
   }
 
   void _onRegisterPressed() {
     if (!_acceptedTerms) {
-      AppToast.show(context, 'Debes aceptar los términos y condiciones', type: AppToastType.warning);
+      AppToast.show(context, 'Debes aceptar los términos y la política de privacidad', type: AppToastType.warning);
       return;
     }
     if (_formKey.currentState!.validate()) {
@@ -460,6 +470,7 @@ class _RegisterPageState extends State<RegisterPage>
                     const TextSpan(text: 'Acepto los '),
                     TextSpan(
                       text: 'Términos',
+                      recognizer: _termsTap,
                       style: TextStyle(
                         color: Colors.white,
                         decoration: TextDecoration.underline,
@@ -469,11 +480,16 @@ class _RegisterPageState extends State<RegisterPage>
                     const TextSpan(text: ' y la '),
                     TextSpan(
                       text: 'Política de privacidad',
+                      recognizer: _privacyTap,
                       style: TextStyle(
                         color: Colors.white,
                         decoration: TextDecoration.underline,
                         decorationColor: Colors.white.withValues(alpha: 0.5),
                       ),
+                    ),
+                    // RGPD: consentimiento explícito para datos de salud
+                    const TextSpan(
+                      text: ', y que se traten mis datos sobre los suplementos que tomo para usar la app.',
                     ),
                   ],
                 ),

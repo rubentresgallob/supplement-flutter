@@ -7,6 +7,7 @@ import '../../../core/widgets/ui/ui.dart';
 import '../../../data/datasources/local_storage_datasource.dart';
 import '../../../data/datasources/auth_remote_datasource.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/utils/legal_links.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../../auth/bloc/auth_state.dart';
@@ -490,6 +491,30 @@ class _ProfilePageState extends State<ProfilePage>
                                     ),
                                   ),
                                 ),
+                              ),
+                              const Divider(
+                                  height: 1,
+                                  color: AppColors.border,
+                                  indent: 52),
+                              _SettingsTile(
+                                icon: LucideIcons.shieldCheck,
+                                label: 'Política de privacidad',
+                                trailing: const Icon(LucideIcons.externalLink,
+                                    color: AppColors.textMuted, size: 18),
+                                onTap: () =>
+                                    openLegalPage(context, LegalPage.privacy),
+                              ),
+                              const Divider(
+                                  height: 1,
+                                  color: AppColors.border,
+                                  indent: 52),
+                              _SettingsTile(
+                                icon: LucideIcons.fileText,
+                                label: 'Términos de uso',
+                                trailing: const Icon(LucideIcons.externalLink,
+                                    color: AppColors.textMuted, size: 18),
+                                onTap: () =>
+                                    openLegalPage(context, LegalPage.terms),
                               ),
                               const Divider(
                                   height: 1,

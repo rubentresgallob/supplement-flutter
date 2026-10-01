@@ -45,4 +45,11 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
+    <!-- Android 11+: permite abrir enlaces web (privacidad, términos) con url_launcher -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
 </manifest>
