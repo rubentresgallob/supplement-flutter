@@ -26,7 +26,8 @@ class IntakesRemoteDataSource {
       ApiConstants.intakes,
       data: {
         'userSupplementId': int.tryParse(userSupplementId) ?? userSupplementId,
-        'takenAt': (takenAt ?? DateTime.now()).toIso8601String(),
+        // En UTC ("...Z"): sin zona horaria el servidor la interpretaría en su hora local
+        'takenAt': (takenAt ?? DateTime.now()).toUtc().toIso8601String(),
       },
     );
     final data = response.data as Map<String, dynamic>;
