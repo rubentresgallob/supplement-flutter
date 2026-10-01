@@ -1,3 +1,4 @@
+import 'forgot_password_page.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -325,7 +326,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: isLoading ? null : () {},
+                    onPressed: isLoading
+                        ? null
+                        : () => Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => ForgotPasswordPage(
+                                initialEmail: _emailController.text.trim(),
+                              ),
+                            )),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 0, vertical: 4),

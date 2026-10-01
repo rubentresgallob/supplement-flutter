@@ -167,6 +167,8 @@ class ApiClient {
           return AuthException('Email o contraseña incorrectos.');
         }
         return AuthException('Sesión expirada. Por favor, inicia sesión nuevamente.');
+      case 429:
+        return ValidationException('Demasiados intentos. Espera un minuto y vuelve a probar.');
       case 409:
         if (message.contains('Email')) {
           return ValidationException('Ya existe una cuenta con ese email.');

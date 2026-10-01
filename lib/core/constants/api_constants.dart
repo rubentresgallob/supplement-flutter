@@ -15,6 +15,8 @@ class ApiConstants {
   static const String login = '/auth/login';
   static const String profile = '/auth/profile';
   static const String deleteAccount = '/auth/delete-account';
+  static const String forgotPassword = '/auth/forgot-password';
+  static const String resetPassword = '/auth/reset-password';
   
   // Supplements endpoints
   static const String supplementsDatabase = '/supplements/database';

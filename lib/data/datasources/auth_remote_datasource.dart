@@ -64,6 +64,29 @@ class AuthRemoteDataSource {
     return UserModel.fromJson(response.data);
   }
   
+  /// Pide un código de 6 cifras por email para recuperar la contraseña.
+  Future<void> forgotPassword(String email) async {
+    await _apiClient.post(ApiConstants.forgotPassword, data: {'email': email});
+  }
+
+  /// Cambia la contraseña con el código y deja la sesión iniciada.
+  Future<UserModel> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    final response = await _apiClient.post(
+      ApiConstants.resetPassword,
+      data: {'email': email, 'code': code, 'newPassword': newPassword},
+    );
+    final token = response.data['access_token'] as String;
+    await _localStorage.saveToken(token);
+    final user = UserModel.fromJson(response.data['user']);
+    await _localStorage.saveUserId(user.id);
+    await _localStorage.saveUsername(user.username);
+    return user;
+  }
+
   /// Borra la cuenta y todos sus datos en el servidor (pide la contraseña).
   Future<void> deleteAccount(String password) async {
     await _apiClient.post(ApiConstants.deleteAccount, data: {'password': password});
