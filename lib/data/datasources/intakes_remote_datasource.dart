@@ -1,13 +1,21 @@
+import 'dart:async';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/intake_model.dart';
 import '../models/streak_model.dart';
+import '../models/rewards_models.dart';
 
 /// Data source remoto para tomas
 class IntakesRemoteDataSource {
   final ApiClient _apiClient;
   
   IntakesRemoteDataSource(this._apiClient);
+
+  final _rewardsController = StreamController<List<GrantedReward>>.broadcast();
+
+  /// Premios que el backend entrega al registrar una toma (día completo, logros...).
+  /// La tienda los escucha para celebrarlos con Capsu y actualizar el saldo.
+  Stream<List<GrantedReward>> get rewards => _rewardsController.stream;
   
   /// Registra una nueva toma
   Future<IntakeModel> createIntake({
@@ -21,7 +29,10 @@ class IntakesRemoteDataSource {
         'takenAt': (takenAt ?? DateTime.now()).toIso8601String(),
       },
     );
-    return IntakeModel.fromJson(response.data);
+    final data = response.data as Map<String, dynamic>;
+    final granted = GrantedReward.listFrom(data['rewards']);
+    if (granted.isNotEmpty) _rewardsController.add(granted);
+    return IntakeModel.fromJson(data);
   }
   
   /// Obtiene las tomas de hoy

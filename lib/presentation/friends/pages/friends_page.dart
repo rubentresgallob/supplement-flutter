@@ -5,6 +5,7 @@ import '../../../data/datasources/friends_remote_datasource.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/ui/ui.dart';
 import '../../../core/services/notification_service.dart';
+import '../../rewards/bloc/rewards_cubit.dart';
 
 class FriendsPage extends StatefulWidget {
   const FriendsPage({super.key});
@@ -999,7 +1000,7 @@ class _PodiumSlot extends StatelessWidget {
         const SizedBox(height: 6),
         // Username
         Text(
-          isMe ? 'Tú' : username,
+          _withMedal(context, entry, isMe ? 'Tú' : username),
           style: TextStyle(
             color: isMe ? AppColors.primary : AppColors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -1123,7 +1124,7 @@ class _LeaderboardRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                isMe ? 'Tú ($username)' : username,
+                _withMedal(context, entry, isMe ? 'Tú ($username)' : username),
                 style: TextStyle(
                   color: isMe ? AppColors.primary : AppColors.textPrimary,
                   fontWeight: FontWeight.w700,
@@ -1418,4 +1419,12 @@ class _Avatar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Añade al nombre la medalla que el usuario lleva equipada (si tiene).
+String _withMedal(BuildContext context, Map<String, dynamic> entry, String name) {
+  final equipped = entry['equipped'];
+  if (equipped is! Map) return name;
+  final medal = context.read<RewardsCubit>().state.item(equipped['medal'] as String?);
+  return medal == null ? name : '$name ${medal.icon}';
 }

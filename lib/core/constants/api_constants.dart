@@ -44,4 +44,12 @@ class ApiConstants {
   
   // Notifications endpoints
   static const String notificationsConfig = '/notifications/config';
+
+  // Puntos y tienda
+  static const String rewardsSummary = '/rewards/summary';
+  static const String rewardsHistory = '/rewards/history';
+  static const String shopItems = '/shop/items';
+  static const String shopBuy = '/shop/buy';
+  static const String shopEquip = '/shop/equip';
+  static const String shopUnequip = '/shop/unequip';
 }

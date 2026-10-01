@@ -11,6 +11,8 @@ import '../../auth/bloc/auth_state.dart';
 import '../../home/bloc/home_bloc.dart';
 import '../../home/bloc/home_state.dart';
 import '../../onboarding/pages/onboarding_page.dart';
+import '../../rewards/bloc/rewards_cubit.dart';
+import '../../../core/widgets/mascot/capsu.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -163,12 +165,26 @@ class _ProfilePageState extends State<ProfilePage>
                         return const SizedBox();
                       }
                       final user = state.user;
+                      // Banner y medalla equipados en la tienda
+                      final rewards = context.watch<RewardsCubit>().state;
+                      final banner = rewards.item(rewards.equipped['banner']);
+                      final medal = rewards.item(rewards.equipped['medal']);
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            gradient: AppGradients.card,
+                            gradient: banner != null && banner.colors.length >= 2
+                                ? LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      ...banner.colors
+                                          .map((c) => c.withValues(alpha: 0.45)),
+                                      AppColors.bgCard,
+                                    ],
+                                  )
+                                : AppGradients.card,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: AppColors.primary.withValues(alpha: 0.15),
@@ -185,23 +201,48 @@ class _ProfilePageState extends State<ProfilePage>
                           child: Column(
                             children: [
                               // Rotating ring avatar
-                              _AnimatedAvatarRing(
-                                letter: user.username[0].toUpperCase(),
-                                ringCtrl: _ringCtrl,
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  _AnimatedAvatarRing(
+                                    letter: user.username[0].toUpperCase(),
+                                    ringCtrl: _ringCtrl,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Capsu(
+                                    size: 62,
+                                    mood: CapsuMood.wave,
+                                    outfit: rewards.outfit,
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 14),
-                              ShaderMask(
-                                shaderCallback: (b) =>
-                                    AppGradients.brand.createShader(b),
-                                child: Text(
-                                  user.username,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: -0.3,
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ShaderMask(
+                                    shaderCallback: (b) =>
+                                        AppGradients.brand.createShader(b),
+                                    child: Text(
+                                      user.username,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: -0.3,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  if (medal != null) ...[
+                                    const SizedBox(width: 6),
+                                    Tooltip(
+                                      message: medal.name,
+                                      child: Text(medal.icon,
+                                          style: const TextStyle(fontSize: 20)),
+                                    ),
+                                  ],
+                                ],
                               ),
                               const SizedBox(height: 4),
                               Text(user.email,
@@ -324,6 +365,12 @@ class _ProfilePageState extends State<ProfilePage>
                                   label: 'Suplementos activos',
                                   value: supplementCount,
                                   unit: 'activos',
+                                ),
+                                const SizedBox(height: 10),
+                                _BentoStatCardWide(
+                                  label: 'Puntos',
+                                  value: context.watch<RewardsCubit>().state.points,
+                                  unit: '💎',
                                 ),
                               ],
                             );

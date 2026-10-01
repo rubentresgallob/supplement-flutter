@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
@@ -12,6 +13,9 @@ import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_state.dart';
 import '../../friends/pages/friends_page.dart';
 import '../../profile/pages/profile_page.dart';
+import '../../rewards/bloc/rewards_cubit.dart';
+import '../../rewards/pages/shop_page.dart';
+import '../../rewards/widgets/rewards_widgets.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/mascot/capsu.dart';
 import '../../../core/widgets/ui/ui.dart';
@@ -36,11 +40,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   bool _showCelebration = false;
   bool _prevAllComplete = false;
+  StreamSubscription<RewardsCelebration>? _rewardsSub;
+
+  static const _shopTab = 2;
+  static const _profileTab = 3;
 
   @override
   void initState() {
     super.initState();
     context.read<HomeBloc>().add(HomeLoadSupplementsEvent());
+
+    // Puntos y tienda: cada premio nuevo lo celebra Capsu con un aviso
+    final rewards = context.read<RewardsCubit>()
+      ..reset()
+      ..load();
+    _rewardsSub = rewards.celebrations.listen((celebration) {
+      if (!mounted) return;
+      RewardPopup.show(context, celebration, outfit: rewards.state.outfit);
+    });
     _fabPulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
@@ -61,6 +78,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _rewardsSub?.cancel();
+    RewardPopup.dismiss();
     _fabPulseCtrl.dispose();
     super.dispose();
   }
@@ -105,16 +124,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               children: [
                 _SupplementsTab(
                   onAddPressed: _openAddSupplement,
-                  onProfilePressed: () => setState(() => _currentTab = 2),
+                  onProfilePressed: () => setState(() => _currentTab = _profileTab),
+                  onShopPressed: () => setState(() => _currentTab = _shopTab),
                 ),
                 const FriendsPage(),
+                const ShopPage(),
                 const ProfilePage(),
               ],
             ),
             bottomNavigationBar: _buildBottomNav(),
             floatingActionButton: _currentTab == 0 ? _buildFAB() : null,
           ),
-          if (_showCelebration) const _CelebrationOverlay(),
+          if (_showCelebration)
+            _CelebrationOverlay(outfit: context.read<RewardsCubit>().state.outfit),
         ],
       ),
     );
@@ -150,11 +172,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     onTap: () => setState(() => _currentTab = 1),
                   ),
                   _NavItem(
+                    icon: LucideIcons.store,
+                    activeIcon: LucideIcons.store,
+                    label: 'Tienda',
+                    isActive: _currentTab == _shopTab,
+                    onTap: () => setState(() => _currentTab = _shopTab),
+                  ),
+                  _NavItem(
                     icon: LucideIcons.userRound,
                     activeIcon: LucideIcons.userRound,
                     label: 'Perfil',
-                    isActive: _currentTab == 2,
-                    onTap: () => setState(() => _currentTab = 2),
+                    isActive: _currentTab == _profileTab,
+                    onTap: () => setState(() => _currentTab = _profileTab),
                   ),
                 ],
               ),
@@ -251,7 +280,8 @@ class _ConfettiParticle {
 }
 
 class _CelebrationOverlay extends StatefulWidget {
-  const _CelebrationOverlay();
+  final CapsuOutfit outfit;
+  const _CelebrationOverlay({this.outfit = CapsuOutfit.none});
 
   @override
   State<_CelebrationOverlay> createState() => _CelebrationOverlayState();
@@ -315,10 +345,11 @@ class _CelebrationOverlayState extends State<_CelebrationOverlay>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         // Capsu celebrando
-                        const Capsu(
+                        Capsu(
                           size: 170,
                           mood: CapsuMood.celebrate,
                           interactive: false,
+                          outfit: widget.outfit,
                         ),
                         const SizedBox(height: 8),
                         // Badge de texto
@@ -687,8 +718,12 @@ class _ProgressRing extends StatelessWidget {
 class _SupplementsTab extends StatelessWidget {
   final VoidCallback onAddPressed;
   final VoidCallback onProfilePressed;
-  const _SupplementsTab(
-      {required this.onAddPressed, required this.onProfilePressed});
+  final VoidCallback onShopPressed;
+  const _SupplementsTab({
+    required this.onAddPressed,
+    required this.onProfilePressed,
+    required this.onShopPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -718,6 +753,24 @@ class _SupplementsTab extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                   child: _buildProgressCard(state),
                 ),
+              ),
+              // Racha rota pero recuperable con protectores
+              BlocBuilder<RewardsCubit, RewardsState>(
+                buildWhen: (a, b) => a.summary?.repair != b.summary?.repair,
+                builder: (context, rewards) {
+                  final repair = rewards.summary?.repair;
+                  return SliverToBoxAdapter(
+                    child: repair == null
+                        ? const SizedBox.shrink()
+                        : Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                            child: StreakRepairCard(
+                              repair: repair,
+                              onGoToShop: onShopPressed,
+                            ),
+                          ),
+                  );
+                },
               ),
             ],
 
@@ -887,7 +940,16 @@ class _SupplementsTab extends StatelessWidget {
                   ],
                 ),
               ),
-              if (streak != null) StreakBadge(streak: streak),
+              BlocBuilder<RewardsCubit, RewardsState>(
+                buildWhen: (a, b) => a.points != b.points,
+                builder: (context, rewards) => rewards.summary == null
+                    ? const SizedBox.shrink()
+                    : PointsChip(points: rewards.points, onTap: onShopPressed),
+              ),
+              if (streak != null) ...[
+                const SizedBox(width: 8),
+                StreakBadge(streak: streak),
+              ],
             ],
           ),
         ),

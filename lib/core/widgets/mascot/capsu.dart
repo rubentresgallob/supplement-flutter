@@ -19,6 +19,47 @@ enum CapsuMood {
   surprised, // sorprendido
 }
 
+/// Accesorios que lleva Capsu (se compran en la tienda).
+/// Cada campo es el código de un objeto del catálogo del backend.
+@immutable
+class CapsuOutfit {
+  final String? head;
+  final String? face;
+  final String? neck;
+  final String? skin;
+
+  const CapsuOutfit({this.head, this.face, this.neck, this.skin});
+
+  static const none = CapsuOutfit();
+
+  /// A partir de los objetos equipados (slot → código) que devuelve el backend.
+  factory CapsuOutfit.fromEquipped(Map<String, String> equipped) => CapsuOutfit(
+        head: equipped['capsu_head'],
+        face: equipped['capsu_face'],
+        neck: equipped['capsu_neck'],
+        skin: equipped['capsu_skin'],
+      );
+
+  /// Copia cambiando un slot (para "probarse" un objeto en la tienda).
+  CapsuOutfit withSlot(String slot, String? code) => CapsuOutfit(
+        head: slot == 'capsu_head' ? code : head,
+        face: slot == 'capsu_face' ? code : face,
+        neck: slot == 'capsu_neck' ? code : neck,
+        skin: slot == 'capsu_skin' ? code : skin,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      other is CapsuOutfit &&
+      other.head == head &&
+      other.face == face &&
+      other.neck == neck &&
+      other.skin == skin;
+
+  @override
+  int get hashCode => Object.hash(head, face, neck, skin);
+}
+
 /// Capsu: la mascota de la app. Una cápsula mitad blanca y mitad naranja,
 /// dibujada 100% en código (sin assets) y animada en tiempo real.
 ///
@@ -38,6 +79,9 @@ class Capsu extends StatefulWidget {
   final VoidCallback? onTap;
   final String? semanticLabel;
 
+  /// Accesorios equipados (gorra, gafas, bufanda, color...).
+  final CapsuOutfit outfit;
+
   const Capsu({
     super.key,
     this.size = 120,
@@ -46,6 +90,7 @@ class Capsu extends StatefulWidget {
     this.interactive = true,
     this.onTap,
     this.semanticLabel,
+    this.outfit = CapsuOutfit.none,
   });
 
   @override
@@ -165,6 +210,7 @@ class _CapsuState extends State<Capsu> with TickerProviderStateMixin {
           t: _time.value,
           blink: _blink.value,
           gaze: _gaze,
+          outfit: widget.outfit,
         ),
       ),
     );
@@ -271,17 +317,37 @@ class _CapsuPainter extends CustomPainter {
   final double t;
   final double blink;
   final Offset gaze;
+  final CapsuOutfit outfit;
 
   _CapsuPainter({
     required this.pose,
     required this.t,
     required this.blink,
     required this.gaze,
+    this.outfit = CapsuOutfit.none,
   });
 
   static const _ink = Color(0xFF171717);
   static const _orange = Color(0xFFFF6B35);
-  static const _orangeDark = Color(0xFFD9480F);
+
+  /// Colores de la mitad de color (degradado + tono oscuro de pies y brazos).
+  ({Color light, Color dark, Color shade}) get _skin => switch (outfit.skin) {
+        'capsu_skin_mint' => (
+            light: const Color(0xFF6EE0B4),
+            dark: const Color(0xFF2FA67A),
+            shade: const Color(0xFF23805E),
+          ),
+        'capsu_skin_gold' => (
+            light: const Color(0xFFFFDC5E),
+            dark: const Color(0xFFF2A100),
+            shade: const Color(0xFFC77F00),
+          ),
+        _ => (
+            light: const Color(0xFFFF7A45),
+            dark: const Color(0xFFF0541A),
+            shade: const Color(0xFFD9480F),
+          ),
+      };
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -318,7 +384,8 @@ class _CapsuPainter extends CustomPainter {
     canvas.translate(-50, -bottom);
 
     // Pies
-    final feet = Paint()..color = _orangeDark;
+    final skin = _skin;
+    final feet = Paint()..color = skin.shade;
     for (final dx in [-10.0, 10.0]) {
       canvas.drawOval(
         Rect.fromCenter(center: Offset(50 + dx, bottom + 0.5), width: 14, height: 7.5),
@@ -342,10 +409,10 @@ class _CapsuPainter extends CustomPainter {
     canvas.drawRect(
       Rect.fromLTRB(left, mid, right, bottom),
       Paint()
-        ..shader = const LinearGradient(
+        ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFFF7A45), Color(0xFFF0541A)],
+          colors: [skin.light, skin.dark],
         ).createShader(Rect.fromLTRB(left, mid, right, bottom)),
     );
     // Volumen: sombra lateral derecha
@@ -382,6 +449,11 @@ class _CapsuPainter extends CustomPainter {
     final gx = gaze.dx.clamp(-1.0, 1.0);
     final gy = (pose.gazeY + gaze.dy).clamp(-1.0, 1.0);
     _drawFace(canvas, faceY, gx, gy);
+
+    // Accesorios (por debajo de los brazos para que las manos queden delante)
+    _drawNeck(canvas, body, left, right, mid);
+    _drawFaceWear(canvas, faceY, gx, gy);
+    _drawHead(canvas, body, top, right);
 
     // Brazos y manos (por delante de la cara para poder taparse los ojos)
     final armY = top + h * 0.56;
@@ -486,6 +558,163 @@ class _CapsuPainter extends CustomPainter {
     }
   }
 
+  // ─── Accesorios ───────────────────────────────────────────────────────────
+
+  void _drawHead(Canvas canvas, RRect body, double top, double right) {
+    switch (outfit.head) {
+      case 'capsu_head_cap':
+        canvas.save();
+        canvas.clipRRect(body);
+        canvas.drawRect(Rect.fromLTRB(0, top - 2, 100, top + 13),
+            Paint()..color = const Color(0xFF2563EB));
+        canvas.drawLine(Offset(50, top), Offset(50, top + 13),
+            Paint()
+              ..color = Colors.black.withValues(alpha: 0.18)
+              ..strokeWidth = 1);
+        canvas.restore();
+        // Visera
+        canvas.drawRRect(
+          RRect.fromLTRBR(46, top + 10, right + 13, top + 15.5,
+              const Radius.circular(3)),
+          Paint()..color = const Color(0xFF1D4ED8),
+        );
+        canvas.drawCircle(Offset(50, top + 0.5), 2.2,
+            Paint()..color = const Color(0xFF1E40AF));
+      case 'capsu_head_party':
+        final hat = Path()
+          ..moveTo(39, top + 7)
+          ..lineTo(61, top + 7)
+          ..lineTo(53, top - 20)
+          ..close();
+        canvas.drawPath(hat, Paint()..color = const Color(0xFFEC4899));
+        canvas.save();
+        canvas.clipPath(hat);
+        final stripe = Paint()
+          ..color = const Color(0xFFFDE047)
+          ..strokeWidth = 3;
+        for (var y = top - 16; y < top + 8; y += 7) {
+          canvas.drawLine(Offset(30, y + 6), Offset(70, y - 4), stripe);
+        }
+        canvas.restore();
+        canvas.drawCircle(Offset(53, top - 21), 3.6, Paint()..color = Colors.white);
+      case 'capsu_head_crown':
+        final crown = Path()
+          ..moveTo(36, top + 5)
+          ..lineTo(36, top - 8)
+          ..lineTo(43, top - 1)
+          ..lineTo(50, top - 13)
+          ..lineTo(57, top - 1)
+          ..lineTo(64, top - 8)
+          ..lineTo(64, top + 5)
+          ..close();
+        canvas.drawPath(
+          crown,
+          Paint()
+            ..shader = const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFFFE27A), Color(0xFFF2A100)],
+            ).createShader(Rect.fromLTRB(36, top - 13, 64, top + 5)),
+        );
+        canvas.drawPath(
+          crown,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.2
+            ..strokeJoin = StrokeJoin.round
+            ..color = const Color(0xFFB45309),
+        );
+        canvas.drawCircle(Offset(50, top), 2.4, Paint()..color = const Color(0xFFE11D48));
+        for (final x in [41.0, 59.0]) {
+          canvas.drawCircle(Offset(x, top + 1.5), 1.6,
+              Paint()..color = const Color(0xFF38BDF8));
+        }
+    }
+  }
+
+  void _drawFaceWear(Canvas canvas, double faceY, double gx, double gy) {
+    final ey = faceY + gy * 2.5;
+    final lx = 50 - 11.5 + gx * 3;
+    final rx = 50 + 11.5 + gx * 3;
+    switch (outfit.face) {
+      case 'capsu_face_sunglasses':
+        final lens = Paint()..color = const Color(0xF0101010);
+        for (final x in [lx, rx]) {
+          canvas.drawRRect(
+            RRect.fromRectAndRadius(
+                Rect.fromCenter(center: Offset(x, ey), width: 16, height: 10.5),
+                const Radius.circular(4)),
+            lens,
+          );
+          // Brillo del cristal
+          canvas.drawLine(Offset(x - 5, ey - 2.5), Offset(x - 2, ey - 2.5),
+              Paint()
+                ..color = Colors.white.withValues(alpha: 0.55)
+                ..strokeWidth = 1.4
+                ..strokeCap = StrokeCap.round);
+        }
+        canvas.drawLine(Offset(lx + 8, ey - 2), Offset(rx - 8, ey - 2),
+            Paint()
+              ..color = const Color(0xFF101010)
+              ..strokeWidth = 2);
+      case 'capsu_face_glasses':
+        final frame = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.8
+          ..color = const Color(0xFF5B3A1E);
+        for (final x in [lx, rx]) {
+          canvas.drawCircle(Offset(x, ey), 7.8, Paint()..color = const Color(0x2260A5FA));
+          canvas.drawCircle(Offset(x, ey), 7.8, frame);
+        }
+        canvas.drawLine(Offset(lx + 7.8, ey), Offset(rx - 7.8, ey), frame);
+    }
+  }
+
+  void _drawNeck(Canvas canvas, RRect body, double left, double right, double mid) {
+    switch (outfit.neck) {
+      case 'capsu_neck_scarf':
+        const red = Color(0xFFDC2626);
+        final stripe = Paint()
+          ..color = Colors.white.withValues(alpha: 0.85)
+          ..strokeWidth = 1.2;
+        canvas.save();
+        canvas.clipRRect(body);
+        canvas.drawRect(Rect.fromLTRB(left, mid - 1, right, mid + 7), Paint()..color = red);
+        canvas.drawLine(Offset(left, mid + 1.5), Offset(right, mid + 1.5), stripe);
+        canvas.drawLine(Offset(left, mid + 4.5), Offset(right, mid + 4.5), stripe);
+        canvas.restore();
+        // Punta colgando que se balancea
+        canvas.save();
+        canvas.translate(right - 12, mid + 5);
+        canvas.rotate(0.18 + 0.05 * math.sin(t * 3));
+        canvas.drawRRect(
+          RRect.fromLTRBR(-3.5, 0, 3.5, 17, const Radius.circular(2)),
+          Paint()..color = red,
+        );
+        canvas.drawLine(const Offset(-3.5, 14), const Offset(3.5, 14), stripe);
+        canvas.restore();
+      case 'capsu_neck_medal':
+        final ribbon = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3.4
+          ..strokeCap = StrokeCap.round
+          ..color = const Color(0xFF2563EB);
+        canvas.drawLine(Offset(42, mid - 2), Offset(50, mid + 10), ribbon);
+        canvas.drawLine(Offset(58, mid - 2), Offset(50, mid + 10), ribbon);
+        final center = Offset(50, mid + 15);
+        canvas.drawCircle(center, 5.5, Paint()..color = const Color(0xFFFAB437));
+        canvas.drawCircle(
+          center,
+          5.5,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.1
+            ..color = const Color(0xFFB45309),
+        );
+        canvas.drawCircle(center, 2.2, Paint()..color = const Color(0xFFFFE27A));
+    }
+  }
+
   void _drawArm(Canvas canvas, Offset shoulder, double angle, double side, Offset eyeTarget) {
     const len = 17.0;
     final rest = shoulder + Offset(side * len * math.sin(angle), len * math.cos(angle));
@@ -501,7 +730,7 @@ class _CapsuPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 4.2
         ..strokeCap = StrokeCap.round
-        ..color = _orangeDark,
+        ..color = _skin.shade,
     );
     final handR = 5.4 + 1.2 * pose.handsOnEyes.clamp(0.0, 1.0);
     canvas.drawCircle(hand, handR, Paint()..color = const Color(0xFFFAFAFA));

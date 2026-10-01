@@ -9,6 +9,7 @@ import '../data/datasources/auth_remote_datasource.dart';
 import '../data/datasources/supplements_remote_datasource.dart';
 import '../data/datasources/intakes_remote_datasource.dart';
 import '../data/datasources/friends_remote_datasource.dart';
+import '../data/datasources/rewards_remote_datasource.dart';
 import '../data/datasources/local_storage_datasource.dart';
 import 'auth/bloc/auth_bloc.dart';
 import 'auth/bloc/auth_state.dart';
@@ -16,6 +17,7 @@ import 'auth/pages/login_page.dart';
 import 'home/pages/home_page.dart';
 import 'home/bloc/home_bloc.dart';
 import 'onboarding/pages/onboarding_page.dart';
+import 'rewards/bloc/rewards_cubit.dart';
 
 class SupplementTrackerApp extends StatelessWidget {
   final AuthBloc authBloc;
@@ -23,6 +25,7 @@ class SupplementTrackerApp extends StatelessWidget {
   final SupplementsRemoteDataSource supplementsDataSource;
   final IntakesRemoteDataSource intakesDataSource;
   final FriendsRemoteDataSource friendsDataSource;
+  final RewardsRemoteDataSource rewardsDataSource;
   final LocalStorageDataSource localStorage;
 
   const SupplementTrackerApp({
@@ -32,6 +35,7 @@ class SupplementTrackerApp extends StatelessWidget {
     required this.supplementsDataSource,
     required this.intakesDataSource,
     required this.friendsDataSource,
+    required this.rewardsDataSource,
     required this.localStorage,
   });
 
@@ -42,6 +46,7 @@ class SupplementTrackerApp extends StatelessWidget {
         RepositoryProvider.value(value: supplementsDataSource),
         RepositoryProvider.value(value: intakesDataSource),
         RepositoryProvider.value(value: friendsDataSource),
+        RepositoryProvider.value(value: rewardsDataSource),
         RepositoryProvider.value(value: localStorage),
       ],
       child: MultiBlocProvider(
@@ -49,6 +54,9 @@ class SupplementTrackerApp extends StatelessWidget {
           BlocProvider.value(value: authBloc),
           BlocProvider(
             create: (context) => HomeBloc(supplementsDataSource, intakesDataSource, localStorage),
+          ),
+          BlocProvider(
+            create: (context) => RewardsCubit(rewardsDataSource, intakesDataSource),
           ),
         ],
         child: MaterialApp(
