@@ -52,6 +52,8 @@ Future<String?> showAppPrompt(
   IconData? icon,
   String initialValue = '',
   int maxLines = 1,
+  bool obscureText = false,
+  bool destructive = false,
 }) async {
   return showFDialog<String>(
     context: context,
@@ -65,6 +67,8 @@ Future<String?> showAppPrompt(
       icon: icon,
       initialValue: initialValue,
       maxLines: maxLines,
+      obscureText: obscureText,
+      destructive: destructive,
     ),
   );
 }
@@ -82,6 +86,10 @@ class _PromptDialog extends StatefulWidget {
   final String initialValue;
   final int maxLines;
 
+  /// Texto oculto (contraseñas). No se recortan espacios.
+  final bool obscureText;
+  final bool destructive;
+
   const _PromptDialog({
     required this.style,
     required this.animation,
@@ -92,6 +100,8 @@ class _PromptDialog extends StatefulWidget {
     required this.icon,
     required this.initialValue,
     required this.maxLines,
+    this.obscureText = false,
+    this.destructive = false,
   });
 
   @override
@@ -107,7 +117,8 @@ class _PromptDialogState extends State<_PromptDialog> {
     super.dispose();
   }
 
-  void _submit() => Navigator.of(context).pop(_ctrl.text.trim());
+  void _submit() =>
+      Navigator.of(context).pop(widget.obscureText ? _ctrl.text : _ctrl.text.trim());
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +137,8 @@ class _PromptDialogState extends State<_PromptDialog> {
             child: TextField(
               controller: _ctrl,
               autofocus: true,
-              maxLines: widget.maxLines,
+              maxLines: widget.obscureText ? 1 : widget.maxLines,
+              obscureText: widget.obscureText,
               style: const TextStyle(color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: widget.hint,
@@ -138,7 +150,11 @@ class _PromptDialogState extends State<_PromptDialog> {
         ],
       ),
       actions: [
-        FButton(onPress: _submit, child: Text(widget.confirmLabel)),
+        FButton(
+          variant: widget.destructive ? FButtonVariant.destructive : FButtonVariant.primary,
+          onPress: _submit,
+          child: Text(widget.confirmLabel),
+        ),
         FButton(
           variant: FButtonVariant.outline,
           onPress: () => Navigator.of(context).pop(),

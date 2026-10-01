@@ -64,6 +64,12 @@ class AuthRemoteDataSource {
     return UserModel.fromJson(response.data);
   }
   
+  /// Borra la cuenta y todos sus datos en el servidor (pide la contraseña).
+  Future<void> deleteAccount(String password) async {
+    await _apiClient.post(ApiConstants.deleteAccount, data: {'password': password});
+    await _localStorage.clearUserData();
+  }
+
   /// Cierra sesión
   Future<void> logout() async {
     await _localStorage.clearUserData();

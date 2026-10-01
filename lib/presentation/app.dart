@@ -47,6 +47,7 @@ class SupplementTrackerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
       providers: [
+        RepositoryProvider.value(value: authDataSource),
         RepositoryProvider.value(value: supplementsDataSource),
         RepositoryProvider.value(value: intakesDataSource),
         RepositoryProvider.value(value: friendsDataSource),

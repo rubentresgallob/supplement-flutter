@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/ui/ui.dart';
 import '../../../data/datasources/local_storage_datasource.dart';
+import '../../../data/datasources/auth_remote_datasource.dart';
+import '../../../core/services/notification_service.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../../auth/bloc/auth_state.dart';
@@ -108,6 +110,42 @@ class _ProfilePageState extends State<ProfilePage>
       final ls = context.read<LocalStorageDataSource>();
       await ls.saveBio(result);
       setState(() => _bio = result);
+    }
+  }
+
+  /// Eliminar cuenta (obligatorio en App Store y Google Play): confirmar + contraseña.
+  Future<void> _deleteAccount() async {
+    final confirmed = await showAppConfirm(
+      context,
+      title: '¿Eliminar tu cuenta?',
+      body:
+          'Se borrarán para siempre tus suplementos, tomas, rachas, amigos, puntos y objetos. '
+          'No se puede deshacer.\n\nSi tienes Pro, cancela también la suscripción en tu tienda de apps.',
+      confirmLabel: 'Continuar',
+      destructive: true,
+    );
+    if (!confirmed || !mounted) return;
+
+    final password = await showAppPrompt(
+      context,
+      title: 'Confirma con tu contraseña',
+      body: 'Escribe tu contraseña para eliminar la cuenta.',
+      confirmLabel: 'Eliminar cuenta',
+      hint: 'Contraseña',
+      icon: LucideIcons.lock,
+      obscureText: true,
+      destructive: true,
+    );
+    if (password == null || password.isEmpty || !mounted) return;
+
+    try {
+      await context.read<AuthRemoteDataSource>().deleteAccount(password);
+      await NotificationService.cancelAll();
+      if (!mounted) return;
+      AppToast.success(context, 'Tu cuenta se ha eliminado');
+      context.read<AuthBloc>().add(AuthLogoutEvent());
+    } catch (e) {
+      if (mounted) AppToast.error(context, e.toString());
     }
   }
 
@@ -511,6 +549,23 @@ class _ProfilePageState extends State<ProfilePage>
                           ],
                         ),
                       ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Eliminar cuenta (discreto, debajo de cerrar sesión)
+            SliverToBoxAdapter(
+              child: Center(
+                child: TextButton(
+                  onPressed: _deleteAccount,
+                  child: const Text(
+                    'Eliminar mi cuenta',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 13,
+                      decoration: TextDecoration.underline,
                     ),
                   ),
                 ),
