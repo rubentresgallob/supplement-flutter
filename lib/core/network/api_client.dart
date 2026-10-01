@@ -154,6 +154,10 @@ class ApiClient {
         : (rawMessage?.toString() ?? 'Error desconocido');
     final path = error.requestOptions.path;
 
+    if (statusCode == 403 && data is Map && data['code'] == 'PRO_REQUIRED') {
+      return ProRequiredException(message);
+    }
+
     switch (statusCode) {
       case 400:
         return ValidationException(message);

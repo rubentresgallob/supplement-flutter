@@ -11,6 +11,7 @@ import 'data/datasources/supplements_remote_datasource.dart';
 import 'data/datasources/intakes_remote_datasource.dart';
 import 'data/datasources/friends_remote_datasource.dart';
 import 'data/datasources/rewards_remote_datasource.dart';
+import 'data/datasources/pro_remote_datasource.dart';
 import 'presentation/auth/bloc/auth_bloc.dart';
 import 'presentation/auth/bloc/auth_event.dart';
 import 'presentation/app.dart';
@@ -47,6 +48,7 @@ void main() async {
   final intakesDataSource = IntakesRemoteDataSource(apiClient);
   final friendsDataSource = FriendsRemoteDataSource(apiClient);
   final rewardsDataSource = RewardsRemoteDataSource(apiClient);
+  final proDataSource = ProRemoteDataSource(apiClient);
 
   final authBloc = AuthBloc(authDataSource, localStorage);
   authBloc.add(AuthCheckStatusEvent());
@@ -59,6 +61,7 @@ void main() async {
       intakesDataSource: intakesDataSource,
       friendsDataSource: friendsDataSource,
       rewardsDataSource: rewardsDataSource,
+      proDataSource: proDataSource,
       localStorage: localStorage,
     ),
   );

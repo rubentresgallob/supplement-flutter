@@ -12,6 +12,7 @@ import '../../home/bloc/home_bloc.dart';
 import '../../home/bloc/home_state.dart';
 import '../../onboarding/pages/onboarding_page.dart';
 import '../../rewards/bloc/rewards_cubit.dart';
+import '../../pro/widgets/pro_profile_section.dart';
 import '../../../core/widgets/mascot/capsu.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -379,6 +380,19 @@ class _ProfilePageState extends State<ProfilePage>
                       ],
                     ),
                   ),
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+            // Plan Pro + estadísticas
+            SliverToBoxAdapter(
+              child: FadeTransition(
+                opacity: _settingsOpacity,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: ProProfileSection(),
                 ),
               ),
             ),

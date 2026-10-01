@@ -45,6 +45,9 @@ class ShopItem extends Equatable {
   final int owned;
   final bool equipped;
 
+  /// Solo se puede comprar con el plan Pro.
+  final bool proOnly;
+
   const ShopItem({
     required this.code,
     required this.name,
@@ -58,6 +61,7 @@ class ShopItem extends Equatable {
     required this.colors,
     required this.owned,
     required this.equipped,
+    this.proOnly = false,
   });
 
   bool get exclusive => price == null;
@@ -80,6 +84,7 @@ class ShopItem extends Equatable {
             .toList(),
         owned: json['owned'] as int? ?? 0,
         equipped: json['equipped'] as bool? ?? false,
+        proOnly: json['proOnly'] as bool? ?? false,
       );
 
   @override

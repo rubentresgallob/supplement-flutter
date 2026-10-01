@@ -337,6 +337,11 @@ class _CapsuPainter extends CustomPainter {
             dark: const Color(0xFF2FA67A),
             shade: const Color(0xFF23805E),
           ),
+        'capsu_skin_galaxy' => (
+            light: const Color(0xFF8F94FB),
+            dark: const Color(0xFF4E54C8),
+            shade: const Color(0xFF363A9E),
+          ),
         'capsu_skin_gold' => (
             light: const Color(0xFFFFDC5E),
             dark: const Color(0xFFF2A100),
@@ -415,6 +420,21 @@ class _CapsuPainter extends CustomPainter {
           colors: [skin.light, skin.dark],
         ).createShader(Rect.fromLTRB(left, mid, right, bottom)),
     );
+    // Capsu galaxia: estrellitas que titilan en la mitad de color
+    if (outfit.skin == 'capsu_skin_galaxy') {
+      const stars = [
+        Offset(0.22, 0.18), Offset(0.62, 0.12), Offset(0.40, 0.42),
+        Offset(0.78, 0.36), Offset(0.28, 0.68), Offset(0.66, 0.62), Offset(0.50, 0.85),
+      ];
+      for (var i = 0; i < stars.length; i++) {
+        final twinkle = (math.sin(t * 3 + i * 1.3) + 1) / 2;
+        canvas.drawCircle(
+          Offset(left + w * stars[i].dx, mid + (bottom - mid) * stars[i].dy),
+          0.7 + 0.9 * twinkle,
+          Paint()..color = Colors.white.withValues(alpha: 0.45 + 0.5 * twinkle),
+        );
+      }
+    }
     // Volumen: sombra lateral derecha
     canvas.drawRect(
       Rect.fromLTRB(left, top, right, bottom),
@@ -562,6 +582,25 @@ class _CapsuPainter extends CustomPainter {
 
   void _drawHead(Canvas canvas, RRect body, double top, double right) {
     switch (outfit.head) {
+      case 'capsu_head_halo':
+        // Aureola flotando que sube y baja un poco
+        final y = top - 9 + 1.5 * math.sin(t * 2.4);
+        final halo = Rect.fromCenter(center: Offset(50, y), width: 30, height: 8);
+        canvas.drawOval(
+          halo.inflate(2),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 5
+            ..color = const Color(0xFFFFE27A).withValues(alpha: 0.25)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+        );
+        canvas.drawOval(
+          halo,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.6
+            ..color = const Color(0xFFFFD54A),
+        );
       case 'capsu_head_cap':
         canvas.save();
         canvas.clipRRect(body);

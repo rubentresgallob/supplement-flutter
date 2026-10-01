@@ -52,4 +52,10 @@ class ApiConstants {
   static const String shopBuy = '/shop/buy';
   static const String shopEquip = '/shop/equip';
   static const String shopUnequip = '/shop/unequip';
+
+  // Plan Pro
+  static const String subscription = '/subscription';
+  static const String subscriptionTestActivate = '/subscription/test/activate';
+  static const String subscriptionTestDeactivate = '/subscription/test/deactivate';
+  static const String stats = '/stats';
 }

@@ -173,7 +173,8 @@ class _RewardPopupView extends StatelessWidget {
               : '${celebration.repairedDays.length} protectores usados: racha salvada',
           null as int?,
         ),
-      for (final r in celebration.rewards) ('💎', r.reason, r.points),
+      for (final r in celebration.rewards)
+        r.points > 0 ? ('💎', r.reason, r.points) : ('🎁', r.reason, null as int?),
     ];
 
     return SafeArea(
@@ -219,7 +220,7 @@ class _RewardPopupView extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (celebration.rewards.isNotEmpty)
+                            if (celebration.totalPoints > 0)
                               Text(
                                 '+${celebration.totalPoints} puntos',
                                 style: const TextStyle(

@@ -32,3 +32,11 @@ class NotFoundException implements Exception {
   @override
   String toString() => message;
 }
+
+/// El servidor responde 403 con code "PRO_REQUIRED": la función es del plan Pro.
+class ProRequiredException implements Exception {
+  final String message;
+  ProRequiredException([this.message = 'Esta función es del plan Pro']);
+  @override
+  String toString() => message;
+}

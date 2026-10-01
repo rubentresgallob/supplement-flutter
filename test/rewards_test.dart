@@ -8,6 +8,17 @@ import 'package:supplement_tracker/data/datasources/rewards_remote_datasource.da
 import 'package:supplement_tracker/data/models/rewards_models.dart';
 import 'package:supplement_tracker/presentation/rewards/bloc/rewards_cubit.dart';
 import 'package:supplement_tracker/presentation/rewards/pages/shop_page.dart';
+import 'package:supplement_tracker/data/datasources/pro_remote_datasource.dart';
+import 'package:supplement_tracker/data/models/pro_models.dart';
+import 'package:supplement_tracker/presentation/pro/bloc/pro_cubit.dart';
+
+class _FakePro implements ProRemoteDataSource {
+  @override
+  Future<ProStatus> getStatus() async => ProStatus.free;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 // Respuestas con la misma forma que devuelve el backend
 Map<String, dynamic> _summaryJson({int points = 200, Map<String, String> equipped = const {}}) => {
@@ -197,7 +208,13 @@ void main() {
       await tester.pumpWidget(MaterialApp(
         home: RepositoryProvider<RewardsRemoteDataSource>.value(
           value: fake,
-          child: BlocProvider.value(value: cubit, child: const ShopPage()),
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: cubit),
+              BlocProvider(create: (_) => ProCubit(_FakePro())),
+            ],
+            child: const ShopPage(),
+          ),
         ),
       ));
       await _frames(tester);
