@@ -22,3 +22,6 @@ android/app/upload-keystore.jks
 .history
 .svn/
 migrate_working_dir/
+
+# Firebase Hosting (caché local)
+.firebase/

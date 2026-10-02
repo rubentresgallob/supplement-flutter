@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -40,6 +41,7 @@ class NotificationService {
   );
 
   static Future<void> initialize() async {
+    if (kIsWeb) return; // En la versión web no hay notificaciones locales
     const android = AndroidInitializationSettings(_smallIcon);
     // Los permisos NO se piden al arrancar: se piden cuando el usuario
     // configura su primer recordatorio (ver [ensurePermissions]).
@@ -68,6 +70,7 @@ class NotificationService {
   ///
   /// Si ya estaban concedidos, no muestra ningún diálogo.
   static Future<bool> ensurePermissions() async {
+    if (kIsWeb) return false;
     final android = _android;
     if (android != null) {
       final granted = await android.requestNotificationsPermission() ?? false;
@@ -117,6 +120,7 @@ class NotificationService {
     bool skipToday = false,
     int daysAhead = maxDaysAhead,
   }) async {
+    if (kIsWeb) return;
     await cancelReminder(id);
 
     final canExact = await _android?.canScheduleExactNotifications() ?? true;
@@ -193,6 +197,7 @@ class NotificationService {
 
   /// Cancela el recordatorio diario y sus avisos sueltos.
   static Future<void> cancelReminder(int id) async {
+    if (kIsWeb) return;
     await _plugin.cancel(id);
     for (var k = 1; k <= 9; k++) {
       await _plugin.cancel(_oneShotId(id, k));
@@ -200,13 +205,19 @@ class NotificationService {
   }
 
   /// Cancela todos los recordatorios (p. ej. al cerrar sesión).
-  static Future<void> cancelAll() => _plugin.cancelAll();
+  static Future<void> cancelAll() async {
+    if (kIsWeb) return;
+    await _plugin.cancelAll();
+  }
 
   /// Recordatorios programados actualmente (útil para depurar).
-  static Future<List<PendingNotificationRequest>> pending() =>
-      _plugin.pendingNotificationRequests();
+  static Future<List<PendingNotificationRequest>> pending() async {
+    if (kIsWeb) return [];
+    return _plugin.pendingNotificationRequests();
+  }
 
   static Future<void> showMotivationSent(String friendName) async {
+    if (kIsWeb) return;
     await _plugin.show(
       _motivationId,
       '¡Ánimos enviados!',
