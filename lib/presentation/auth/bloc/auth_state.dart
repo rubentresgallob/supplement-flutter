@@ -28,6 +28,16 @@ class AuthAuthenticatedState extends AuthState {
 /// Estado de no autenticado
 class AuthUnauthenticatedState extends AuthState {}
 
+/// Falta verificar el email: la pantalla de login/registro abre la del código
+class AuthNeedsVerificationState extends AuthState {
+  final String email;
+
+  const AuthNeedsVerificationState(this.email);
+
+  @override
+  List<Object> get props => [email];
+}
+
 /// Estado de error
 class AuthErrorState extends AuthState {
   final String message;

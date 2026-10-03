@@ -10,6 +10,7 @@ import '../../../core/utils/validators.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/ui/ui.dart';
 import '../../../core/utils/legal_links.dart';
+import 'verify_email_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -147,8 +148,10 @@ class _RegisterPageState extends State<RegisterPage>
       listener: (context, state) {
         if (state is AuthErrorState) {
           AppToast.show(context, state.message, type: AppToastType.error);
-        } else if (state is AuthAuthenticatedState) {
-          Navigator.of(context).pop();
+        } else if (state is AuthNeedsVerificationState) {
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (_) => VerifyEmailPage(email: state.email),
+          ));
         }
       },
       child: Scaffold(

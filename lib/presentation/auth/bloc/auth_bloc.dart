@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/errors/exceptions.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../data/datasources/auth_remote_datasource.dart';
 import '../../../data/datasources/local_storage_datasource.dart';
@@ -47,13 +48,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       emit(AuthLoadingState());
       
-      final user = await _authDataSource.register(
+      await _authDataSource.register(
         email: event.email,
         password: event.password,
         username: event.username,
       );
-      
-      emit(AuthAuthenticatedState(user));
+
+      emit(AuthNeedsVerificationState(event.email));
     } catch (e) {
       emit(AuthErrorState(e.toString()));
     }
@@ -73,11 +74,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       
       emit(AuthAuthenticatedState(user));
+    } on EmailNotVerifiedException {
+      emit(AuthNeedsVerificationState(event.email));
     } catch (e) {
       emit(AuthErrorState(e.toString()));
     }
   }
-  
+
   /// Cierra sesión
   Future<void> _onLogout(
     AuthLogoutEvent event,

@@ -17,6 +17,8 @@ class ApiConstants {
   static const String deleteAccount = '/auth/delete-account';
   static const String forgotPassword = '/auth/forgot-password';
   static const String resetPassword = '/auth/reset-password';
+  static const String verifyEmail = '/auth/verify-email';
+  static const String resendVerification = '/auth/resend-verification';
   
   // Supplements endpoints
   static const String supplementsDatabase = '/supplements/database';

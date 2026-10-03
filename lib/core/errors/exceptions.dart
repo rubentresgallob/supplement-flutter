@@ -33,6 +33,14 @@ class NotFoundException implements Exception {
   String toString() => message;
 }
 
+/// El servidor responde 403 con code "EMAIL_NOT_VERIFIED": hay que meter el código del email.
+class EmailNotVerifiedException implements Exception {
+  final String message;
+  EmailNotVerifiedException([this.message = 'Verifica tu email con el código que te hemos enviado']);
+  @override
+  String toString() => message;
+}
+
 /// El servidor responde 403 con code "PRO_REQUIRED": la función es del plan Pro.
 class ProRequiredException implements Exception {
   final String message;

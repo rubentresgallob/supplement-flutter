@@ -10,13 +10,14 @@ class AuthRemoteDataSource {
   
   AuthRemoteDataSource(this._apiClient, this._localStorage);
   
-  /// Registra un nuevo usuario
-  Future<UserModel> register({
+  /// Registra un nuevo usuario. NO inicia sesión: el servidor envía un código
+  /// al email y hay que llamar a [verifyEmail] con él.
+  Future<void> register({
     required String email,
     required String password,
     required String username,
   }) async {
-    final response = await _apiClient.post(
+    await _apiClient.post(
       ApiConstants.register,
       data: {
         'email': email,
@@ -26,15 +27,25 @@ class AuthRemoteDataSource {
         'acceptTerms': true,
       },
     );
-    
+  }
+
+  /// Verifica el email con el código de 6 cifras y deja la sesión iniciada.
+  Future<UserModel> verifyEmail({required String email, required String code}) async {
+    final response = await _apiClient.post(
+      ApiConstants.verifyEmail,
+      data: {'email': email, 'code': code},
+    );
     final token = response.data['access_token'] as String;
     await _localStorage.saveToken(token);
-    
     final user = UserModel.fromJson(response.data['user']);
     await _localStorage.saveUserId(user.id);
     await _localStorage.saveUsername(user.username);
-    
     return user;
+  }
+
+  /// Pide otro código de verificación (el servidor envía como mucho 1 por minuto).
+  Future<void> resendVerification(String email) async {
+    await _apiClient.post(ApiConstants.resendVerification, data: {'email': email});
   }
   
   /// Inicia sesión

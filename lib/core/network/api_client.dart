@@ -154,6 +154,9 @@ class ApiClient {
         : (rawMessage?.toString() ?? 'Error desconocido');
     final path = error.requestOptions.path;
 
+    if (statusCode == 403 && data is Map && data['code'] == 'EMAIL_NOT_VERIFIED') {
+      return EmailNotVerifiedException(message);
+    }
     if (statusCode == 403 && data is Map && data['code'] == 'PRO_REQUIRED') {
       return ProRequiredException(message);
     }
@@ -168,7 +171,9 @@ class ApiClient {
         }
         return AuthException('Sesión expirada. Por favor, inicia sesión nuevamente.');
       case 429:
-        return ValidationException('Demasiados intentos. Espera un minuto y vuelve a probar.');
+        return ValidationException('Demasiados intentos. Espera un poco y vuelve a probar.');
+      case 503:
+        return ServerException(message);
       case 409:
         if (message.contains('Email')) {
           return ValidationException('Ya existe una cuenta con ese email.');

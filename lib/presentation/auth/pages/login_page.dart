@@ -12,6 +12,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/mascot/capsu.dart';
 import '../../../core/widgets/ui/ui.dart';
 import 'register_page.dart';
+import 'verify_email_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -172,6 +173,12 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           _errorTimer = Timer(const Duration(milliseconds: 3200), () {
             if (mounted) setState(() => _loginError = false);
           });
+        } else if (state is AuthNeedsVerificationState &&
+            (ModalRoute.of(context)?.isCurrent ?? false)) {
+          // Solo si el login está delante (si viene del registro, lo abre él)
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => VerifyEmailPage(email: state.email),
+          ));
         }
       },
       child: Scaffold(
