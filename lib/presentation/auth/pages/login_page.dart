@@ -303,7 +303,9 @@ class _LoginPageState extends State<LoginPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text('¿Aún sin cuenta?', style: AppText.body),
+        const Flexible(
+          child: Text('¿Aún sin cuenta?', style: AppText.body),
+        ),
         PressableScale(
           onTap: isLoading
               ? null
