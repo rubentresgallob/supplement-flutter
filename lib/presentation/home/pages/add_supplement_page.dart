@@ -521,7 +521,7 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
                 const SizedBox(height: 16),
               ],
 
-              _SectionLabel('Forma'),
+              const _SectionLabel('Forma'),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -536,7 +536,7 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
               ),
               const SizedBox(height: 20),
 
-              _SectionLabel('Dosis'),
+              const _SectionLabel('Dosis'),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -571,7 +571,7 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
               ),
               const SizedBox(height: 20),
 
-              _SectionLabel('Horarios'),
+              const _SectionLabel('Horarios'),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -590,7 +590,7 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
               ),
               const SizedBox(height: 20),
 
-              _SectionLabel('Tomas por día'),
+              const _SectionLabel('Tomas por día'),
               const SizedBox(height: 8),
               if (_isPillUnit)
                 // Cápsulas/comprimidos: cada unidad = 1 toma (automático)
@@ -609,7 +609,7 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
                 ),
               const SizedBox(height: 20),
 
-              _SectionLabel('Recordatorio'),
+              const _SectionLabel('Recordatorio'),
               const SizedBox(height: 8),
               GestureDetector(
                 onTap: _pickNotificationTime,

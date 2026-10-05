@@ -53,22 +53,13 @@ class AppEmpty extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 19,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.2,
-              ),
+              style: AppText.question,
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               description,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 14,
-                height: 1.5,
-              ),
+              style: AppText.body,
             ),
             if (action != null) ...[
               const SizedBox(height: AppSpacing.xxl),

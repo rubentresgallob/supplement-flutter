@@ -49,15 +49,11 @@ class AppAlert extends StatelessWidget {
               children: [
                 if (title != null) ...[
                   Text(title!,
-                      style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600)),
+                      style: AppText.label),
                   const SizedBox(height: 2),
                 ],
                 Text(message,
-                    style: const TextStyle(
-                        color: AppColors.textSecondary, fontSize: 13, height: 1.4)),
+                    style: AppText.body),
               ],
             ),
           ),

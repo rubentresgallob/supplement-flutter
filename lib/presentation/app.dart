@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import '../core/constants/app_constants.dart';
+import '../core/design/design.dart';
 import '../core/theme/forui_theme.dart';
 import '../data/datasources/auth_remote_datasource.dart';
 import '../data/datasources/supplements_remote_datasource.dart';
@@ -69,7 +68,9 @@ class SupplementTrackerApp extends StatelessWidget {
         child: MaterialApp(
           title: AppConstants.appName,
           debugShowCheckedModeBanner: false,
-          theme: _buildTheme(),
+          theme: buildAppTheme(),
+          darkTheme: buildAppTheme(),
+          themeMode: ThemeMode.dark,
           // App en español (textos de forui y de Material)
           locale: AppLocalization.locale,
           localizationsDelegates: AppLocalization.delegates,
@@ -96,143 +97,6 @@ class SupplementTrackerApp extends StatelessWidget {
       ),
     );
   }
-
-  static const _font = FTypeface.defaultFontFamily;
-
-  ThemeData _buildTheme() {
-    final base = ThemeData.dark(useMaterial3: true);
-    return base.copyWith(
-      scaffoldBackgroundColor: AppColors.bgDeep,
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.primary,
-        secondary: AppColors.gold,
-        surface: AppColors.bgCard,
-        error: AppColors.error,
-        onPrimary: AppColors.onPrimary,
-        onSecondary: AppColors.onPrimary,
-        onSurface: AppColors.textPrimary,
-        onError: Colors.white,
-      ),
-      textTheme: base.textTheme.apply(fontFamily: _font).copyWith(
-        bodyLarge: const TextStyle(
-            fontFamily: _font,
-            color: AppColors.textPrimary, fontSize: 16),
-        bodyMedium: const TextStyle(
-            fontFamily: _font,
-            color: AppColors.textPrimary, fontSize: 14),
-        bodySmall: const TextStyle(
-            fontFamily: _font,
-            color: AppColors.textSecondary, fontSize: 12),
-        labelLarge: const TextStyle(
-            fontFamily: _font,
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-            fontSize: 14),
-        labelMedium: const TextStyle(
-            fontFamily: _font,
-            color: AppColors.textSecondary, fontSize: 12),
-        labelSmall: const TextStyle(
-            fontFamily: _font,
-            color: AppColors.textMuted, fontSize: 11),
-      ).apply(
-        bodyColor: AppColors.textPrimary,
-        displayColor: AppColors.textPrimary,
-      ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.bgDeep,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-        ),
-        titleTextStyle: const TextStyle(
-            fontFamily: _font,
-          color: AppColors.textPrimary,
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.3,
-        ),
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
-      ),
-      cardTheme: CardThemeData(
-        color: AppColors.bgCard,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.border),
-        ),
-      ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.bgCard,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textMuted,
-        type: BottomNavigationBarType.fixed,
-        elevation: 0,
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.bgCardElevated,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-        ),
-        labelStyle: const TextStyle(color: AppColors.textSecondary),
-        hintStyle: const TextStyle(color: AppColors.textMuted),
-        prefixIconColor: AppColors.textSecondary,
-        suffixIconColor: AppColors.textSecondary,
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.onPrimary,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          textStyle: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 15,
-            letterSpacing: 0.3,
-          ),
-        ),
-      ),
-      checkboxTheme: CheckboxThemeData(
-        fillColor: WidgetStateProperty.resolveWith((states) =>
-            states.contains(WidgetState.selected)
-                ? AppColors.primary
-                : AppColors.bgCardElevated),
-        side: const BorderSide(color: AppColors.border),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-      ),
-      chipTheme: ChipThemeData(
-        backgroundColor: AppColors.bgCardElevated,
-        selectedColor: AppColors.primary.withValues(alpha: 0.25),
-        labelStyle: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
-        side: const BorderSide(color: AppColors.border),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        checkmarkColor: AppColors.primary,
-      ),
-      dividerTheme: const DividerThemeData(
-        color: AppColors.border,
-        thickness: 1,
-      ),
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.bgCardElevated,
-        contentTextStyle: const TextStyle(color: AppColors.textPrimary),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
 }
 
 /// Muestra el tutorial de Capsu la primera vez; después, la Home.
@@ -255,7 +119,7 @@ class _OnboardingGateState extends State<_OnboardingGate> {
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 400),
+      duration: AppMotion.slow,
       child: _done
           ? const HomePage()
           : OnboardingPage(key: const ValueKey('onboarding'), onDone: _finish),
@@ -268,53 +132,23 @@ class _SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppGradients.background),
-        child: const Center(
+    return const Scaffold(
+      body: AmbientBackground(
+        child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _BrandLogo(size: 72),
-              SizedBox(height: 32),
+              Floating(child: IridescentOrb(size: 64)),
+              SizedBox(height: AppSpace.xxl),
               SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.primary,
-                ),
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-class _BrandLogo extends StatelessWidget {
-  final double size;
-  const _BrandLogo({this.size = 56});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        gradient: AppGradients.brand,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 24,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Icon(LucideIcons.flame,
-          color: Colors.white, size: size * 0.55),
     );
   }
 }

@@ -154,12 +154,7 @@ class _ToastViewState extends State<_ToastView> with TickerProviderStateMixin {
                   Expanded(
                     child: Text(
                       widget.message,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        height: 1.35,
-                      ),
+                      style: AppText.label,
                     ),
                   ),
                 ],

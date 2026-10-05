@@ -28,6 +28,10 @@ class AppForuiTheme {
   static final FThemeData data = FThemeData(
     touch: true,
     debugLabel: 'Supplement Tracker Dark',
+    typography: FTypography(
+      display: FTypeface(fontFamily: AppText.family),
+      body: FTypeface(fontFamily: AppText.family),
+    ),
     colors: FColors.neutralDark.copyWith(
       background: AppColors.bgDeep,
       foreground: AppColors.textPrimary,

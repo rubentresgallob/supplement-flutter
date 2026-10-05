@@ -1445,7 +1445,7 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
               ),
               const SizedBox(height: 24),
 
-              _SectionLabel('Forma'),
+              const _SectionLabel('Forma'),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -1460,7 +1460,7 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
               ),
               const SizedBox(height: 20),
 
-              _SectionLabel('Dosis'),
+              const _SectionLabel('Dosis'),
               const SizedBox(height: 8),
               Row(children: [
                 Expanded(
@@ -1498,7 +1498,7 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
               ]),
               const SizedBox(height: 20),
 
-              _SectionLabel('Horarios'),
+              const _SectionLabel('Horarios'),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -1517,7 +1517,7 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
               ),
               const SizedBox(height: 20),
 
-              _SectionLabel('Tomas por día'),
+              const _SectionLabel('Tomas por día'),
               const SizedBox(height: 8),
               if (_isPillUnit)
                 AppAlert(
@@ -1534,7 +1534,7 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
                 ),
               const SizedBox(height: 20),
 
-              _SectionLabel('Recordatorio'),
+              const _SectionLabel('Recordatorio'),
               const SizedBox(height: 8),
               GestureDetector(
                 onTap: _pickNotificationTime,

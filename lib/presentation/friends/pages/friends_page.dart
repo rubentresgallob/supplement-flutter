@@ -43,8 +43,8 @@ class _FriendsPageState extends State<FriendsPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(children: [
-                    const Expanded(
+                  const Row(children: [
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -90,11 +90,11 @@ class _FriendsPageState extends State<FriendsPage>
                       labelStyle: const TextStyle(
                           fontWeight: FontWeight.w700, fontSize: 13),
                       tabs: const [
-                        const Tab(text: 'Amigos'),
+                        Tab(text: 'Amigos'),
                         Tab(
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: const [
+                            children: [
                               Icon(LucideIcons.chartColumn, size: 14),
                               SizedBox(width: 6),
                               Text('Clasificación'),

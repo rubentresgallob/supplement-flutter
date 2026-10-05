@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../constants/app_constants.dart';
-import '../../theme/app_tokens.dart';
+import '../tokens.dart';
+import '../typography.dart';
 
 enum AppButtonVariant { primary, secondary, outline, ghost, destructive }
 
 enum AppButtonSize { sm, md, lg }
 
-/// Botón basado en el `Button` de coss:
-/// variantes, estado de carga (spinner sobre texto transparente),
-/// opacidad 64% deshabilitado, brillo interior superior, feedback háptico
+/// Botón del design system: color plano (azul solo en el primario), radio 16,
+/// estado de carga (spinner sobre texto transparente), feedback háptico
 /// y zona táctil mínima de 44pt.
 class AppButton extends StatefulWidget {
   final String label;
@@ -45,57 +44,45 @@ class _AppButtonState extends State<AppButton> {
   double get _height => switch (widget.size) {
         AppButtonSize.sm => 36,
         AppButtonSize.md => 48,
-        AppButtonSize.lg => 56,
+        AppButtonSize.lg => 52,
       };
 
-  double get _fontSize => switch (widget.size) {
-        AppButtonSize.sm => 13,
-        AppButtonSize.md => 15,
-        AppButtonSize.lg => 16,
-      };
+  TextStyle get _textStyle =>
+      widget.size == AppButtonSize.sm ? AppText.buttonSmall : AppText.button;
 
-  ({Gradient? gradient, Color? bg, Color fg, Color border, List<BoxShadow> shadow})
-      get _style {
+  ({Color bg, Color fg, Color border}) get _style {
     switch (widget.variant) {
       case AppButtonVariant.primary:
         return (
-          gradient: null,
-          bg: AppColors.primary,
+          bg: _enabled || widget.loading
+              ? AppColors.primary
+              : AppColors.primaryDisabled,
           fg: AppColors.onPrimary,
-          border: AppColors.primary,
-          shadow: _enabled ? AppShadows.md : const [],
+          border: Colors.transparent,
         );
       case AppButtonVariant.destructive:
         return (
-          gradient: null,
-          bg: AppColors.error,
-          fg: AppColors.onPrimary,
-          border: AppColors.error,
-          shadow: _enabled ? AppShadows.glow(AppColors.error, strength: 0.24) : const [],
+          bg: AppColors.danger.withValues(alpha: 0.14),
+          fg: AppColors.danger,
+          border: AppColors.danger.withValues(alpha: 0.5),
         );
       case AppButtonVariant.secondary:
         return (
-          gradient: null,
-          bg: AppColors.bgCardElevated,
+          bg: AppColors.surfaceRaised,
           fg: AppColors.textPrimary,
           border: Colors.transparent,
-          shadow: const [],
         );
       case AppButtonVariant.outline:
         return (
-          gradient: null,
-          bg: AppColors.input,
+          bg: AppColors.background,
           fg: AppColors.textPrimary,
-          border: AppColors.border,
-          shadow: AppShadows.xs,
+          border: AppColors.borderStrong,
         );
       case AppButtonVariant.ghost:
         return (
-          gradient: null,
           bg: _pressed ? AppColors.surfaceMuted : Colors.transparent,
           fg: AppColors.textPrimary,
           border: Colors.transparent,
-          shadow: const [],
         );
     }
   }
@@ -106,31 +93,23 @@ class _AppButtonState extends State<AppButton> {
 
   void _handleTap() {
     if (!_enabled) return;
-    HapticFeedback.lightImpact();
+    HapticFeedback.selectionClick();
     widget.onPressed!();
   }
 
   @override
   Widget build(BuildContext context) {
     final s = _style;
-    final hasFill = widget.variant == AppButtonVariant.primary ||
-        widget.variant == AppButtonVariant.destructive;
-    final textStyle = TextStyle(
-      color: widget.loading ? Colors.transparent : s.fg,
-      fontSize: _fontSize,
-      fontWeight: FontWeight.w700,
-      letterSpacing: 0.1,
-    );
+    final fg = widget.loading ? Colors.transparent : s.fg;
+    final textStyle = _textStyle.copyWith(color: fg);
 
     final content = Row(
       mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (widget.icon != null) ...[
-          Icon(widget.icon,
-              size: _fontSize + 3,
-              color: widget.loading ? Colors.transparent : s.fg.withValues(alpha: 0.85)),
-          const SizedBox(width: AppSpacing.sm),
+          Icon(widget.icon, size: 18, color: fg),
+          const SizedBox(width: AppSpace.sm),
         ],
         Flexible(
           child: Text(widget.label,
@@ -144,9 +123,12 @@ class _AppButtonState extends State<AppButton> {
       enabled: _enabled,
       label: widget.semanticLabel ?? widget.label,
       excludeSemantics: true,
-      child: AnimatedOpacity(
-        duration: AppMotion.fast,
-        opacity: widget.onPressed == null && !widget.loading ? 0.64 : 1,
+      child: Opacity(
+        opacity: widget.onPressed == null &&
+                !widget.loading &&
+                widget.variant != AppButtonVariant.primary
+            ? 0.5
+            : 1,
         child: GestureDetector(
           onTapDown: (_) => _setPressed(true),
           onTapUp: (_) => _setPressed(false),
@@ -157,41 +139,27 @@ class _AppButtonState extends State<AppButton> {
             duration: AppMotion.fast,
             curve: AppMotion.standard,
             child: AnimatedContainer(
-              duration: AppMotion.fast,
+              duration: AppMotion.medium,
+              curve: AppMotion.standard,
               height: _height,
               constraints: const BoxConstraints(minWidth: AppSpacing.minTouch),
               padding: EdgeInsets.symmetric(
-                  horizontal: widget.size == AppButtonSize.sm ? 14 : 20),
+                  horizontal:
+                      widget.size == AppButtonSize.sm ? AppSpace.md : AppSpace.xl),
               decoration: BoxDecoration(
-                gradient: s.gradient,
                 color: s.bg,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
+                borderRadius: BorderRadius.circular(AppRadii.button),
                 border: Border.all(color: s.border),
-                boxShadow: _pressed ? const [] : s.shadow,
               ),
-              foregroundDecoration: hasFill
-                  // Brillo interior superior (inset-shadow white/16% de coss)
-                  ? BoxDecoration(
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.center,
-                        colors: [
-                          Colors.white.withValues(alpha: _pressed ? 0 : 0.16),
-                          Colors.white.withValues(alpha: 0),
-                        ],
-                      ),
-                    )
-                  : null,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   content,
                   if (widget.loading)
                     SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2.2, color: s.fg),
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: s.fg),
                     ),
                 ],
               ),

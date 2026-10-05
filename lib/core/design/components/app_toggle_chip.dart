@@ -21,7 +21,7 @@ class AppToggleChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = selected ? AppColors.onPrimary : AppColors.textSecondary;
+    final fg = selected ? AppColors.textPrimary : AppColors.textSecondary;
     return Semantics(
       button: true,
       toggled: selected,
@@ -39,26 +39,23 @@ class AppToggleChip extends StatelessWidget {
             curve: AppMotion.standard,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
             decoration: BoxDecoration(
-              color: selected ? AppColors.primary : AppColors.input,
+              color: selected ? AppColors.surfaceSelected : AppColors.surfaceRaised,
               borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
-                color: selected ? AppColors.primary : AppColors.border,
+                color: selected ? AppColors.ring : Colors.transparent,
+                width: 1.2,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (icon != null) ...[
-                  Icon(icon, size: 15, color: fg),
+                  Icon(icon, size: 15, color: selected ? AppColors.accent : fg),
                   const SizedBox(width: 6),
                 ],
                 Text(
                   label,
-                  style: TextStyle(
-                    color: fg,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    fontSize: 13,
-                  ),
+                  style: AppText.label.copyWith(color: fg),
                 ),
               ],
             ),

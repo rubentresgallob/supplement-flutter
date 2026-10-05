@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:flutter/services.dart';
 import '../../constants/app_constants.dart';
 import '../../theme/app_tokens.dart';
+import 'surfaces.dart';
 
 /// Stepper numérico basado en `NumberField` de coss (− valor +).
 class AppNumberField extends StatelessWidget {
@@ -51,12 +51,7 @@ class AppNumberField extends StatelessWidget {
                   text,
                   key: ValueKey(value),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    fontFeatures: [FontFeature.tabularFigures()],
-                  ),
+                  style: AppText.navTitle,
                 ),
               ),
             ),
@@ -86,13 +81,9 @@ class _StepButton extends StatelessWidget {
       button: true,
       enabled: onTap != null,
       label: label,
-      child: InkWell(
-        onTap: onTap == null
-            ? null
-            : () {
-                HapticFeedback.selectionClick();
-                onTap!();
-              },
+      child: PressableScale(
+        onTap: onTap,
+        scale: 0.9,
         child: SizedBox(
           width: 52,
           height: double.infinity,
