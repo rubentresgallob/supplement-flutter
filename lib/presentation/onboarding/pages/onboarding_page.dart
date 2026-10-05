@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/mascot/capsu.dart';
 import '../../../core/widgets/ui/ui.dart';
 
@@ -28,25 +27,25 @@ class _OnboardingPageState extends State<OnboardingPage> {
   static const _steps = [
     _Step(
       CapsuMood.wave,
-      '¡Hola! Soy Capsu 👋',
+      'Hola, soy Capsu',
       'Tu compañero de suplementación',
       'Te ayudo a no olvidar ninguna toma y a ser constante día tras día.',
     ),
     _Step(
       CapsuMood.thinking,
-      'Toca el + para probarlo 👇',
+      'Toca el + para probarlo',
       'Añade tu stack',
       'Pulsa el botón + y elige entre más de 30 suplementos del catálogo, o crea uno personalizado.',
     ),
     _Step(
       CapsuMood.idle,
-      'Toca el círculo 👇',
+      'Toca el círculo',
       'Registra cada toma',
       'Toca el círculo de cada suplemento al tomarlo. Si lo tomas varias veces al día, cada toque suma.',
     ),
     _Step(
       CapsuMood.celebrate,
-      '¡A por la racha! 🔥',
+      'A por la racha',
       'Mantén tu racha',
       'Completa tu stack cada día para subir tu racha y compárate con tus amigos.',
     ),
@@ -66,7 +65,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       _reaction = mood;
       _speechOverride = speech;
     });
-    _reactionTimer = Timer(const Duration(milliseconds: 1600), () {
+    _reactionTimer = Timer(AppMotion.hero * 2, () {
       if (mounted) setState(() => _reaction = null);
     });
   }
@@ -94,124 +93,134 @@ class _OnboardingPageState extends State<OnboardingPage> {
   Widget build(BuildContext context) {
     final step = _steps[_page];
     return Scaffold(
-      backgroundColor: AppColors.bgDeep,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Barra superior
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
-              child: Row(
-                children: [
-                  Text(
-                    '${_page + 1} de ${_steps.length}',
-                    style: const TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      fontFeatures: [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                  const Spacer(),
-                  AnimatedOpacity(
-                    duration: AppMotion.fast,
-                    opacity: _isLast ? 0 : 1,
-                    child: TextButton(
-                      onPressed: _isLast ? null : widget.onDone,
-                      child: const Text(
-                        'Saltar',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Capsu + bocadillo
-            ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 64),
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: CapsuBubble(text: _speechOverride ?? step.speech),
-              ),
-            ),
-            Transform.translate(
-              offset: const Offset(0, -14),
-              child: Capsu(
-                size: 104,
-                mood: _reaction ?? step.mood,
-                lookAt: _page == 2 ? const Offset(0, 0.9) : Offset.zero,
-              ),
-            ),
-
-            // Pasos
-            Expanded(
-              child: PageView(
-                controller: _pageCtrl,
-                onPageChanged: (i) => setState(() {
-                  _page = i;
-                  _speechOverride = null;
-                  _reaction = null;
-                }),
-                children: [
-                  _StepView(step: _steps[0], illustration: const _FeaturesDemo()),
-                  _StepView(
-                    step: _steps[1],
-                    illustration: _AddDemo(
-                      onAdded: () => _react(CapsuMood.happy, '¡Genial! Así de fácil 🙌'),
-                    ),
-                  ),
-                  _StepView(
-                    step: _steps[2],
-                    illustration: _IntakeDemo(
-                      onProgress: () => _react(CapsuMood.happy, '¡Una más! 💪'),
-                      onComplete: () =>
-                          _react(CapsuMood.celebrate, '¡Omega 3 completado! 🎉'),
-                    ),
-                  ),
-                  _StepView(step: _steps[3], illustration: const _StreakDemo()),
-                ],
-              ),
-            ),
-
-            // Indicador + botón
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      for (var i = 0; i < _steps.length; i++)
-                        AnimatedContainer(
-                          duration: AppMotion.of(context, AppMotion.base),
-                          curve: AppMotion.standard,
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
-                          width: i == _page ? 22 : 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: i == _page ? AppColors.primary : AppColors.border,
-                            borderRadius: BorderRadius.circular(3),
+      body: AmbientBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Barra superior: paso, saltar y progreso
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpace.screen, AppSpace.md, AppSpace.screen, 0),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Text('${_page + 1} de ${_steps.length}',
+                            style: AppText.micro),
+                        const Spacer(),
+                        Opacity(
+                          opacity: _isLast ? 0 : 1,
+                          child: PressableScale(
+                            onTap: _isLast ? null : widget.onDone,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
+                              child: Text('Saltar',
+                                  style: AppText.label.copyWith(color: AppColors.textSecondary)),
+                            ),
                           ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpace.sm),
+                    FlowProgress(value: (_page + 1) / _steps.length),
+                  ],
+                ),
+              ),
+
+              // Protagonista: Capsu flotando sobre su halo
+              Reveal(
+                child: Column(
+                  children: [
+                    const SizedBox(height: AppSpace.md),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 56),
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: CapsuBubble(text: _speechOverride ?? step.speech),
+                      ),
+                    ),
+                    HeroGlow(
+                      size: 200,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        alignment: Alignment.center,
+                        children: [
+                          const Positioned(
+                            left: -52,
+                            top: 16,
+                            child: Floating(
+                                phase: 0.4, amplitude: 4, child: IridescentOrb(size: 14)),
+                          ),
+                          const Positioned(
+                            right: -60,
+                            bottom: 20,
+                            child: Floating(
+                                phase: 0.7, amplitude: 8, child: IridescentOrb(size: 22)),
+                          ),
+                          Floating(
+                            child: Capsu(
+                              size: 104,
+                              mood: _reaction ?? step.mood,
+                              lookAt: _page == 2 ? const Offset(0, 0.9) : Offset.zero,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Pasos
+              Expanded(
+                child: Reveal(
+                  delay: Reveal.step1,
+                  child: PageView(
+                    controller: _pageCtrl,
+                    onPageChanged: (i) => setState(() {
+                      _page = i;
+                      _speechOverride = null;
+                      _reaction = null;
+                    }),
+                    children: [
+                      _StepView(step: _steps[0], illustration: const _FeaturesDemo()),
+                      _StepView(
+                        step: _steps[1],
+                        illustration: _AddDemo(
+                          onAdded: () => _react(CapsuMood.happy, 'Así de fácil'),
+                        ),
+                      ),
+                      _StepView(
+                        step: _steps[2],
+                        illustration: _IntakeDemo(
+                          onProgress: () => _react(CapsuMood.happy, 'Una más'),
+                          onComplete: () =>
+                              _react(CapsuMood.celebrate, 'Omega 3 completado'),
+                        ),
+                      ),
+                      _StepView(step: _steps[3], illustration: const _StreakDemo()),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  AppButton(
-                    label: _isLast ? '¡Empezar!' : 'Siguiente',
-                    icon: _isLast ? LucideIcons.flame : null,
-                    size: AppButtonSize.lg,
-                    expand: true,
-                    onPressed: _next,
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+
+              // Indicador + acción principal anclada abajo
+              PageDots(count: _steps.length, index: _page),
+              Reveal(
+                delay: Reveal.step3,
+                child: BottomActions(
+                  children: [
+                    AppButton(
+                      label: _isLast ? '¡Empezar!' : 'Siguiente',
+                      size: AppButtonSize.lg,
+                      expand: true,
+                      onPressed: _next,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -226,30 +235,13 @@ class _StepView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.screen),
       child: Column(
         children: [
-          Text(
-            step.title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.4,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            step.description,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 20),
+          Text(step.title, textAlign: TextAlign.center, style: AppText.title),
+          const SizedBox(height: AppSpace.sm),
+          Text(step.description, textAlign: TextAlign.center, style: AppText.body),
+          const SizedBox(height: AppSpace.xl),
           illustration,
         ],
       ),
@@ -278,13 +270,10 @@ class _FeaturesDemo extends StatelessWidget {
             decoration: AppDecorations.frame(radius: AppRadius.xl),
             child: Row(
               children: [
-                Icon(icon, size: 18, color: AppColors.textPrimary),
+                IconChip(icon: icon),
                 const SizedBox(width: 12),
                 Text(label,
-                    style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500)),
+                    style: AppText.label),
               ],
             ),
           ),
@@ -323,13 +312,10 @@ class _MockTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(name,
-                    style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600)),
+                    style: AppText.label),
                 const SizedBox(height: 2),
                 Text(detail,
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                    style: AppText.caption),
               ],
             ),
           ),
@@ -364,7 +350,7 @@ class _AddDemoState extends State<_AddDemo> {
               ? TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0, end: 1),
                   duration: AppMotion.of(context, AppMotion.slow),
-                  curve: Curves.easeOutBack,
+                  curve: AppMotion.pop,
                   builder: (_, v, child) => Opacity(
                     opacity: v.clamp(0, 1),
                     child: Transform.scale(scale: 0.9 + 0.1 * v, child: child),
@@ -446,7 +432,7 @@ class _IntakeDemoState extends State<_IntakeDemo> {
             height: 46,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: done ? AppColors.success : Colors.transparent,
+              color: done ? AppColors.mint : Colors.transparent,
               border: Border.all(
                 color: done
                     ? AppColors.success
@@ -458,14 +444,10 @@ class _IntakeDemoState extends State<_IntakeDemo> {
             ),
             child: Center(
               child: done
-                  ? const Icon(LucideIcons.check, color: AppColors.onPrimary, size: 22)
+                  ? const Icon(LucideIcons.check, color: AppColors.background, size: 22)
                   : Text(
                       '$_taken/$_total',
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: AppText.captionStrong,
                     ),
             ),
           ),
@@ -494,23 +476,18 @@ class _StreakDemo extends StatelessWidget {
               const SizedBox(width: 8),
               TweenAnimationBuilder<int>(
                 tween: IntTween(begin: 0, end: 12),
-                duration: AppMotion.of(context, const Duration(milliseconds: 1400)),
+                duration: AppMotion.of(context, AppMotion.hero),
                 curve: AppMotion.standard,
                 builder: (_, v, __) => Text(
                   '$v',
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 36,
-                    fontWeight: FontWeight.w700,
-                    fontFeatures: [FontFeature.tabularFigures()],
-                  ),
+                  style: AppText.hero,
                 ),
               ),
               const SizedBox(width: 6),
               const Padding(
                 padding: EdgeInsets.only(top: 10),
                 child: Text('días seguidos',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    style: AppText.body),
               ),
             ],
           ),
@@ -522,8 +499,8 @@ class _StreakDemo extends StatelessWidget {
                 TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0, end: 1),
                   duration: AppMotion.of(
-                      context, Duration(milliseconds: 300 + i * 150)),
-                  curve: Curves.easeOutBack,
+                      context, AppMotion.medium + AppMotion.fast * i),
+                  curve: AppMotion.pop,
                   builder: (_, v, __) => Column(
                     children: [
                       Transform.scale(
@@ -534,10 +511,10 @@ class _StreakDemo extends StatelessWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: i < 6
-                                ? AppColors.accent.withValues(alpha: 0.9 * v.clamp(0.0, 1.0))
+                                ? AppColors.accentStrong.withValues(alpha: v.clamp(0.0, 1.0))
                                 : AppColors.input,
                             border: Border.all(
-                                color: i < 6 ? AppColors.accent : AppColors.border),
+                                color: i < 6 ? AppColors.accentStrong : AppColors.border),
                           ),
                           child: i < 6
                               ? const Icon(LucideIcons.check,
@@ -547,10 +524,7 @@ class _StreakDemo extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(days[i],
-                          style: const TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600)),
+                          style: AppText.micro),
                     ],
                   ),
                 ),

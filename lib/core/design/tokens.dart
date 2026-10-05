@@ -114,7 +114,7 @@ class AppGradients {
 
   static const radialGlow = RadialGradient(
     colors: AppColors.glowGradient,
-    radius: 0.8,
+    radius: 0.5,
   );
 }
 
