@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+import '../../rewards/widgets/rewards_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,76 +24,13 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage>
-    with TickerProviderStateMixin {
+class _ProfilePageState extends State<ProfilePage> {
   String _bio = '';
-
-  late final AnimationController _ringCtrl;
-  late final AnimationController _entranceCtrl;
-  late final Animation<double> _headerOpacity;
-  late final Animation<Offset> _headerSlide;
-  late final Animation<double> _statsOpacity;
-  late final Animation<Offset> _statsSlide;
-  late final Animation<double> _settingsOpacity;
-  late final Animation<Offset> _settingsSlide;
 
   @override
   void initState() {
     super.initState();
     _bio = context.read<LocalStorageDataSource>().getBio();
-
-    _ringCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat();
-
-    _entranceCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..forward();
-
-    _headerOpacity = CurvedAnimation(
-      parent: _entranceCtrl,
-      curve: const Interval(0.0, 0.5),
-    );
-    _headerSlide = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _entranceCtrl,
-      curve: const Interval(0.0, 0.5, curve: Curves.easeOutCubic),
-    ));
-
-    _statsOpacity = CurvedAnimation(
-      parent: _entranceCtrl,
-      curve: const Interval(0.25, 0.65),
-    );
-    _statsSlide = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _entranceCtrl,
-      curve: const Interval(0.25, 0.65, curve: Curves.easeOutCubic),
-    ));
-
-    _settingsOpacity = CurvedAnimation(
-      parent: _entranceCtrl,
-      curve: const Interval(0.5, 0.9),
-    );
-    _settingsSlide = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _entranceCtrl,
-      curve: const Interval(0.5, 0.9, curve: Curves.easeOutCubic),
-    ));
-  }
-
-  @override
-  void dispose() {
-    _ringCtrl.dispose();
-    _entranceCtrl.dispose();
-    super.dispose();
   }
 
   Future<void> _editBio() async {
@@ -160,45 +97,28 @@ class _ProfilePageState extends State<ProfilePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bgDeep,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
-              child: FadeTransition(
-                opacity: _headerOpacity,
-                child: SlideTransition(
-                  position: _headerSlide,
-                  child: const Padding(
-                    padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
+            const SliverToBoxAdapter(
+              child: Padding(
+                    padding: EdgeInsets.fromLTRB(AppSpace.screen, 16, AppSpace.screen, 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Mi cuenta',
-                            style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 14)),
+                            style: AppText.body),
                         SizedBox(height: 2),
                         Text('Perfil',
-                            style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 24,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: -0.5)),
+                            style: AppText.title),
                       ],
                     ),
                   ),
-                ),
-              ),
             ),
 
             // Avatar + info
             SliverToBoxAdapter(
-              child: FadeTransition(
-                opacity: _headerOpacity,
-                child: SlideTransition(
-                  position: _headerSlide,
-                  child: BlocBuilder<AuthBloc, AuthState>(
+              child: BlocBuilder<AuthBloc, AuthState>(
                     builder: (context, state) {
                       if (state is! AuthAuthenticatedState) {
                         return const SizedBox();
@@ -209,7 +129,7 @@ class _ProfilePageState extends State<ProfilePage>
                       final banner = rewards.item(rewards.equipped['banner']);
                       final medal = rewards.item(rewards.equipped['medal']);
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpace.screen),
                         child: Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
@@ -224,18 +144,8 @@ class _ProfilePageState extends State<ProfilePage>
                                     ],
                                   )
                                 : AppGradients.card,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: AppColors.primary.withValues(alpha: 0.15),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color:
-                                    AppColors.primary.withValues(alpha: 0.06),
-                                blurRadius: 20,
-                                spreadRadius: 2,
-                              ),
-                            ],
+                            borderRadius: BorderRadius.circular(AppRadii.card),
+                            border: Border.all(color: AppColors.border),
                           ),
                           child: Column(
                             children: [
@@ -244,10 +154,7 @@ class _ProfilePageState extends State<ProfilePage>
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  _AnimatedAvatarRing(
-                                    letter: user.username[0].toUpperCase(),
-                                    ringCtrl: _ringCtrl,
-                                  ),
+                                  _Avatar(letter: user.username[0].toUpperCase()),
                                   const SizedBox(width: 12),
                                   Capsu(
                                     size: 62,
@@ -260,67 +167,46 @@ class _ProfilePageState extends State<ProfilePage>
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  ShaderMask(
-                                    shaderCallback: (b) =>
-                                        AppGradients.brand.createShader(b),
-                                    child: Text(
-                                      user.username,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: -0.3,
-                                      ),
-                                    ),
-                                  ),
+                                  Text(user.username, style: AppText.question),
                                   if (medal != null) ...[
-                                    const SizedBox(width: 6),
+                                    const SizedBox(width: AppSpace.sm),
                                     Tooltip(
                                       message: medal.name,
-                                      child: Text(medal.icon,
-                                          style: const TextStyle(fontSize: 20)),
+                                      child: MedalIcon(medal: medal, size: 26),
                                     ),
                                   ],
                                 ],
                               ),
                               const SizedBox(height: 4),
                               Text(user.email,
-                                  style: const TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 13)),
+                                  style: AppText.body),
                               const SizedBox(height: 4),
                               Text(
                                 'Miembro desde ${_formatDate(user.createdAt)}',
-                                style: const TextStyle(
-                                    color: AppColors.textMuted, fontSize: 12),
+                                style: AppText.caption,
                               ),
                               const SizedBox(height: 16),
-                              GestureDetector(
+                              PressableScale(
                                 onTap: _editBio,
+                                scale: 0.98,
                                 child: Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 14, vertical: 12),
+                                      horizontal: AppSpace.md, vertical: AppSpace.md),
                                   decoration: BoxDecoration(
-                                    color: AppColors.bgCardElevated,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border:
-                                        Border.all(color: AppColors.border),
+                                    color: AppColors.surfaceRaised,
+                                    borderRadius: BorderRadius.circular(AppRadii.tile),
                                   ),
                                   child: Row(
                                     children: [
                                       Expanded(
                                         child: Text(
                                           _bio.isEmpty
-                                              ? 'Añade una descripción...'
+                                              ? 'Añade una descripción'
                                               : _bio,
-                                          style: TextStyle(
-                                            color: _bio.isEmpty
+                                          style: AppText.body.copyWith(color: _bio.isEmpty
                                                 ? AppColors.textMuted
-                                                : AppColors.textSecondary,
-                                            fontSize: 13,
-                                            height: 1.5,
-                                          ),
+                                                : AppColors.textSecondary),
                                         ),
                                       ),
                                       const SizedBox(width: 8),
@@ -337,31 +223,21 @@ class _ProfilePageState extends State<ProfilePage>
                       );
                     },
                   ),
-                ),
-              ),
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
             // Stats
             SliverToBoxAdapter(
-              child: FadeTransition(
-                opacity: _statsOpacity,
-                child: SlideTransition(
-                  position: _statsSlide,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpace.screen),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 12),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
                           child: Text('Mis estadísticas',
-                              style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5)),
+                              style: AppText.label.copyWith(color: AppColors.textSecondary)),
                         ),
                         BlocBuilder<HomeBloc, HomeState>(
                           builder: (context, homeState) {
@@ -385,7 +261,7 @@ class _ProfilePageState extends State<ProfilePage>
                                         label: 'Racha actual',
                                         value: streakDays,
                                         unit: 'días',
-                                        labelColor: AppColors.gold,
+                                        labelColor: AppColors.accent,
                                       ),
                                     ),
                                     const SizedBox(width: 10),
@@ -409,7 +285,7 @@ class _ProfilePageState extends State<ProfilePage>
                                 _BentoStatCardWide(
                                   label: 'Puntos',
                                   value: context.watch<RewardsCubit>().state.points,
-                                  unit: '💎',
+                                  unit: 'puntos',
                                 ),
                               ],
                             );
@@ -418,51 +294,34 @@ class _ProfilePageState extends State<ProfilePage>
                       ],
                     ),
                   ),
-                ),
-              ),
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
             // Plan Pro + estadísticas
-            SliverToBoxAdapter(
-              child: FadeTransition(
-                opacity: _settingsOpacity,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+            const SliverToBoxAdapter(
+              child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: AppSpace.screen),
                   child: ProProfileSection(),
                 ),
-              ),
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
             // Ajustes
             SliverToBoxAdapter(
-              child: FadeTransition(
-                opacity: _settingsOpacity,
-                child: SlideTransition(
-                  position: _settingsSlide,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpace.screen),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 12),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
                           child: Text('Ajustes',
-                              style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5)),
+                              style: AppText.label.copyWith(color: AppColors.textSecondary)),
                         ),
                         Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.bgCard,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
-                          ),
+                          decoration: AppDecorations.frame(),
                           child: Column(
                             children: [
                               _SettingsTile(
@@ -473,10 +332,7 @@ class _ProfilePageState extends State<ProfilePage>
                                     color: AppColors.textMuted),
                                 onTap: () {},
                               ),
-                              const Divider(
-                                  height: 1,
-                                  color: AppColors.border,
-                                  indent: 52),
+                              const Divider(indent: 64),
                               _SettingsTile(
                                 icon: LucideIcons.pill,
                                 label: 'Ver tutorial de Capsu',
@@ -491,41 +347,30 @@ class _ProfilePageState extends State<ProfilePage>
                                   ),
                                 ),
                               ),
-                              const Divider(
-                                  height: 1,
-                                  color: AppColors.border,
-                                  indent: 52),
+                              const Divider(indent: 64),
                               _SettingsTile(
                                 icon: LucideIcons.shieldCheck,
                                 label: 'Política de privacidad',
                                 trailing: const Icon(LucideIcons.externalLink,
-                                    color: AppColors.textMuted, size: 18),
+                                    color: AppColors.textMuted, size: 16),
                                 onTap: () =>
                                     openLegalPage(context, LegalPage.privacy),
                               ),
-                              const Divider(
-                                  height: 1,
-                                  color: AppColors.border,
-                                  indent: 52),
+                              const Divider(indent: 64),
                               _SettingsTile(
                                 icon: LucideIcons.fileText,
                                 label: 'Términos de uso',
                                 trailing: const Icon(LucideIcons.externalLink,
-                                    color: AppColors.textMuted, size: 18),
+                                    color: AppColors.textMuted, size: 16),
                                 onTap: () =>
                                     openLegalPage(context, LegalPage.terms),
                               ),
-                              const Divider(
-                                  height: 1,
-                                  color: AppColors.border,
-                                  indent: 52),
+                              const Divider(indent: 64),
                               _SettingsTile(
                                 icon: LucideIcons.info,
                                 label: 'Versión de la app',
-                                trailing: const Text('1.0.0',
-                                    style: TextStyle(
-                                        color: AppColors.textMuted,
-                                        fontSize: 13)),
+                                trailing: Text('1.0.0',
+                                    style: AppText.body.copyWith(color: AppColors.textMuted)),
                                 onTap: () {},
                               ),
                             ],
@@ -534,62 +379,39 @@ class _ProfilePageState extends State<ProfilePage>
                       ],
                     ),
                   ),
-                ),
-              ),
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
             // Cerrar sesión
             SliverToBoxAdapter(
-              child: FadeTransition(
-                opacity: _settingsOpacity,
-                child: SlideTransition(
-                  position: _settingsSlide,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: GestureDetector(
-                      onTap: () =>
+              child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpace.screen),
+                    child: AppButton(
+                      label: 'Cerrar sesión',
+                      icon: LucideIcons.logOut,
+                      variant: AppButtonVariant.outline,
+                      size: AppButtonSize.lg,
+                      expand: true,
+                      onPressed: () =>
                           context.read<AuthBloc>().add(AuthLogoutEvent()),
-                      child: Container(
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: AppColors.error.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                              color: AppColors.error.withValues(alpha: 0.3)),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(LucideIcons.logOut,
-                                color: AppColors.error, size: 20),
-                            SizedBox(width: 10),
-                            Text('Cerrar sesión',
-                                style: TextStyle(
-                                    color: AppColors.error,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 15)),
-                          ],
-                        ),
-                      ),
                     ),
                   ),
-                ),
-              ),
             ),
 
             // Eliminar cuenta (discreto, debajo de cerrar sesión)
             SliverToBoxAdapter(
               child: Center(
-                child: TextButton(
-                  onPressed: _deleteAccount,
-                  child: const Text(
-                    'Eliminar mi cuenta',
-                    style: TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 13,
-                      decoration: TextDecoration.underline,
+                child: PressableScale(
+                  onTap: _deleteAccount,
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpace.lg),
+                    child: Text(
+                      'Eliminar mi cuenta',
+                      style: AppText.caption.copyWith(
+                        decoration: TextDecoration.underline,
+                        decorationColor: AppColors.textTertiary,
+                      ),
                     ),
                   ),
                 ),
@@ -604,72 +426,28 @@ class _ProfilePageState extends State<ProfilePage>
   }
 }
 
-class _AnimatedAvatarRing extends StatelessWidget {
+class _Avatar extends StatelessWidget {
   final String letter;
-  final AnimationController ringCtrl;
-
-  const _AnimatedAvatarRing({
-    required this.letter,
-    required this.ringCtrl,
-  });
+  const _Avatar({required this.letter});
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: ringCtrl,
-      builder: (_, child) => Stack(
-        alignment: Alignment.center,
-        children: [
-          // Rotating gradient ring
-          Transform.rotate(
-            angle: ringCtrl.value * 2 * math.pi,
-            child: Container(
-              width: 94,
-              height: 94,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: SweepGradient(
-                  colors: [
-                    AppColors.primary,
-                    AppColors.gold,
-                    Color(0x00FF6B35),
-                    AppColors.primary,
-                  ],
-                  stops: [0.0, 0.35, 0.65, 1.0],
-                ),
-              ),
-            ),
-          ),
-          // Gap ring
-          Container(
-            width: 86,
-            height: 86,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.bgCard,
-            ),
-          ),
-          // Avatar
-          child!,
-        ],
+    return Container(
+      width: 76,
+      height: 76,
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: SweepGradient(
+            colors: [...AppColors.iridescent, AppColors.iridescent.first]),
       ),
       child: Container(
-        width: 80,
-        height: 80,
+        alignment: Alignment.center,
         decoration: const BoxDecoration(
-          gradient: AppGradients.brand,
           shape: BoxShape.circle,
+          color: AppColors.surface,
         ),
-        child: Center(
-          child: Text(
-            letter,
-            style: const TextStyle(
-              color: AppColors.onPrimary,
-              fontSize: 34,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
+        child: Text(letter, style: AppText.display),
       ),
     );
   }
@@ -691,48 +469,30 @@ class _BentoStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      padding: const EdgeInsets.all(AppSpace.lg),
+      decoration: AppDecorations.frame(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              color: labelColor,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.12,
-            ),
+            label,
+            style: AppText.caption.copyWith(color: labelColor),
           ),
           const SizedBox(height: 10),
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 0, end: value.toDouble()),
-            duration: const Duration(milliseconds: 900),
-            curve: Curves.easeOutCubic,
+            duration: AppMotion.of(context, AppMotion.slow),
+            curve: AppMotion.standard,
             builder: (_, v, __) => RichText(
               text: TextSpan(
                 children: [
                   TextSpan(
                     text: '${v.round()}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 36,
-                      fontWeight: FontWeight.w600,
-                      height: 1,
-                    ),
+                    style: AppText.display,
                   ),
                   TextSpan(
                     text: ' $unit',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: AppText.body,
                   ),
                 ],
               ),
@@ -758,12 +518,8 @@ class _BentoStatCardWide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
+      padding: const EdgeInsets.all(AppSpace.lg),
+      decoration: AppDecorations.frame(),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -772,38 +528,24 @@ class _BentoStatCardWide extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                label.toUpperCase(),
-                style: const TextStyle(
-                  color: AppColors.textMuted,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.12,
-                ),
+                label,
+                style: AppText.caption,
               ),
               const SizedBox(height: 4),
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: value.toDouble()),
-                duration: const Duration(milliseconds: 900),
-                curve: Curves.easeOutCubic,
+                duration: AppMotion.of(context, AppMotion.slow),
+                curve: AppMotion.standard,
                 builder: (_, v, __) => RichText(
                   text: TextSpan(
                     children: [
                       TextSpan(
                         text: '${v.round()}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 36,
-                          fontWeight: FontWeight.w600,
-                          height: 1,
-                        ),
+                        style: AppText.display,
                       ),
                       TextSpan(
                         text: ' $unit',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: AppText.label.copyWith(color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -811,11 +553,7 @@ class _BentoStatCardWide extends StatelessWidget {
               ),
             ],
           ),
-          Icon(
-            LucideIcons.pill,
-            size: 32,
-            color: AppColors.primary.withValues(alpha: 0.3),
-          ),
+          const Icon(LucideIcons.pill, size: 28, color: AppColors.textTertiary),
         ],
       ),
     );
@@ -837,31 +575,17 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return PressableScale(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+      scale: 0.98,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.lg, vertical: AppSpace.md),
         child: Row(
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AppColors.bgCardElevated,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.border),
-              ),
-              child:
-                  Icon(icon, color: AppColors.textSecondary, size: 18),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-                child: Text(label,
-                    style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500))),
+            IconChip(icon: icon),
+            const SizedBox(width: AppSpace.md),
+            Expanded(child: Text(label, style: AppText.label)),
             trailing,
           ],
         ),
