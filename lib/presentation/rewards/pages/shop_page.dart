@@ -656,10 +656,14 @@ class _AchievementTile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Opacity(
-                opacity: a.unlocked ? 1 : 0.4,
-                child: IconChip(
-                    icon: achievementIcon(a.code), highlighted: a.unlocked),
+              MedalArt(
+                metal: a.unlocked
+                    ? achievementMetal(a.code)
+                    : RewardMetal.locked,
+                icon: a.unlocked ? achievementIcon(a.code) : LucideIcons.lock,
+                size: 48,
+                ribbon: false,
+                glow: a.unlocked,
               ),
               const SizedBox(height: 6),
               Text(

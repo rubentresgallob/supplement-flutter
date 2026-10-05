@@ -30,7 +30,7 @@ IconData shopItemIcon(ShopItem item) => switch (item.code) {
       'banner_galaxy' => LucideIcons.orbit,
       'banner_aurora' => LucideIcons.sparkles,
       _ => switch (item.category) {
-          'medal' => LucideIcons.medal,
+          'medal' => LucideIcons.star,
           'banner' => LucideIcons.image,
           'consumable' => LucideIcons.shield,
           'capsu' => LucideIcons.sparkles,
@@ -51,18 +51,47 @@ IconData achievementIcon(String code) => switch (code) {
       _ => code.startsWith('streak_') ? LucideIcons.flame : LucideIcons.trophy,
     };
 
-/// Medalla equipada: icono en un chip con el color de su rareza.
+/// Metal de cada medalla de la tienda.
+RewardMetal medalMetal(ShopItem item) => switch (item.code) {
+      'medal_bronze' => RewardMetal.bronze,
+      'medal_silver' => RewardMetal.silver,
+      'medal_gold' => RewardMetal.gold,
+      'medal_capsule' => RewardMetal.lavender,
+      'medal_streak_30' => RewardMetal.rose,
+      'medal_streak_100' => RewardMetal.mint,
+      'medal_streak_365' || 'medal_pro_diamond' => RewardMetal.prism,
+      _ => switch (item.rarity) {
+          'rare' => RewardMetal.silver,
+          'epic' => RewardMetal.lavender,
+          'legendary' => RewardMetal.prism,
+          _ => RewardMetal.bronze,
+        },
+    };
+
+/// Metal de cada logro: sube con la dificultad.
+RewardMetal achievementMetal(String code) => switch (code) {
+      'streak_3' || 'streak_7' => RewardMetal.bronze,
+      'streak_14' => RewardMetal.silver,
+      'streak_30' || 'streak_60' => RewardMetal.gold,
+      'streak_100' => RewardMetal.mint,
+      'streak_365' => RewardMetal.prism,
+      'friends_5' => RewardMetal.silver,
+      _ => RewardMetal.lavender,
+    };
+
+/// Medalla equipada (perfil, probador, ranking): el disco sin cinta.
 class MedalIcon extends StatelessWidget {
   final ShopItem medal;
   final double size;
   const MedalIcon({super.key, required this.medal, this.size = 28});
 
   @override
-  Widget build(BuildContext context) => IconChip(
+  Widget build(BuildContext context) => MedalArt(
+        metal: medalMetal(medal),
         icon: shopItemIcon(medal),
         size: size,
-        highlighted: true,
-        color: rarityColor(medal.rarity),
+        ribbon: false,
+        glow: false,
       );
 }
 
@@ -109,7 +138,7 @@ class PointsChip extends StatelessWidget {
   }
 }
 
-/// Vista previa de un objeto: Capsu con el accesorio, degradado del banner o icono.
+/// Vista previa de un objeto: Capsu con el accesorio, banner, medalla o escudo.
 class ShopItemPreview extends StatelessWidget {
   final ShopItem item;
   final double size;
@@ -132,17 +161,22 @@ class ShopItemPreview extends StatelessWidget {
       );
     }
     if (item.category == 'banner' && item.colors.length >= 2) {
-      return Container(
-        width: size * 1.4,
-        height: size * 0.8,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: item.colors),
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-        child: Icon(shopItemIcon(item),
-            size: size * 0.36, color: AppColors.textPrimary),
+      return BannerArt(
+        colors: item.colors,
+        icon: shopItemIcon(item),
+        width: size * 1.5,
+        height: size * 0.82,
       );
+    }
+    if (item.category == 'medal') {
+      return MedalArt(
+        metal: medalMetal(item),
+        icon: shopItemIcon(item),
+        size: size,
+      );
+    }
+    if (item.category == 'consumable') {
+      return ShieldArt(size: size * 0.95, icon: LucideIcons.flame);
     }
     return IconChip(
       icon: shopItemIcon(item),

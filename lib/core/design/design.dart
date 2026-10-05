@@ -13,4 +13,5 @@ export 'components/app_skeleton.dart';
 export 'components/app_toast.dart';
 export 'components/app_toggle_chip.dart';
 export 'components/flow.dart';
+export 'components/reward_art.dart';
 export 'components/surfaces.dart';
