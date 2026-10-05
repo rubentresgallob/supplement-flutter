@@ -62,7 +62,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
             code: _codeCtrl.text.trim(),
           );
       if (!mounted) return;
-      AppToast.success(context, '¡Email verificado! Bienvenido');
+      AppToast.success(context, 'Email verificado. Bienvenido');
       final auth = context.read<AuthBloc>();
       Navigator.of(context).pop();
       auth.add(AuthCheckStatusEvent()); // el token ya está guardado
@@ -92,32 +92,39 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bgDeep,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(title: const Text('Verifica tu email')),
-      body: SafeArea(
+      body: AmbientBackground(
+        child: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpace.screen),
             children: [
               const Center(
-                child: Capsu(size: 90, mood: CapsuMood.happy, interactive: false),
+                child: HeroGlow(
+                  size: 180,
+                  child: Floating(
+                    amplitude: 4,
+                    child: Capsu(
+                        size: 90, mood: CapsuMood.happy, interactive: false),
+                  ),
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               Text.rich(
                 TextSpan(
                   children: [
                     const TextSpan(text: 'Te hemos enviado un código de 6 cifras a\n'),
                     TextSpan(
                       text: widget.email,
-                      style: const TextStyle(
-                          color: AppColors.textPrimary, fontWeight: FontWeight.w700),
+                      style: AppText.label,
                     ),
                     const TextSpan(text: '\nRevisa también la carpeta de spam.'),
                   ],
                 ),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 14, height: 1.4),
+                style: AppText.body,
               ),
               const SizedBox(height: 24),
               TextFormField(
@@ -126,15 +133,10 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                 keyboardType: TextInputType.number,
                 maxLength: 6,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  letterSpacing: 8,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppText.display,
                 decoration: const InputDecoration(
                   labelText: 'Código',
-                  prefixIcon: Icon(LucideIcons.keyRound),
+                  prefixIcon: Icon(LucideIcons.keyRound, size: 18),
                   counterText: '',
                 ),
                 validator: (v) => (v ?? '').length != 6 ? 'El código tiene 6 cifras' : null,
@@ -148,16 +150,18 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                 loading: _loading,
                 onPressed: _verify,
               ),
-              const SizedBox(height: 8),
-              TextButton(
+              const SizedBox(height: AppSpace.sm),
+              AppButton(
+                label: _wait > 0
+                    ? '¿No te llega? Reenviar en $_wait s'
+                    : '¿No te llega? Reenviar código',
+                variant: AppButtonVariant.ghost,
+                expand: true,
                 onPressed: _loading || _wait > 0 ? null : _resend,
-                child: Text(
-                  _wait > 0 ? '¿No te llega? Reenviar en $_wait s' : '¿No te llega? Reenviar código',
-                  style: const TextStyle(color: AppColors.textSecondary),
-                ),
               ),
             ],
           ),
+        ),
         ),
       ),
     );

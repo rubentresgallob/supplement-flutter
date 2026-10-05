@@ -78,28 +78,35 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bgDeep,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(title: const Text('Recuperar contraseña')),
-      body: SafeArea(
+      body: AmbientBackground(
+        child: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpace.screen),
             children: [
               Center(
-                child: Capsu(
-                  size: 90,
-                  mood: _codeSent ? CapsuMood.happy : CapsuMood.thinking,
-                  interactive: false,
+                child: HeroGlow(
+                  size: 180,
+                  child: Floating(
+                    amplitude: 4,
+                    child: Capsu(
+                      size: 90,
+                      mood: _codeSent ? CapsuMood.happy : CapsuMood.thinking,
+                      interactive: false,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               Text(
                 _codeSent
                     ? 'Revisa tu email (y la carpeta de spam). Escribe el código de 6 cifras y tu contraseña nueva.'
                     : 'Escribe el email de tu cuenta y te enviaremos un código para crear una contraseña nueva.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 14, height: 1.4),
+                style: AppText.body,
               ),
               const SizedBox(height: 24),
               TextFormField(
@@ -107,10 +114,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 enabled: !_codeSent,
                 keyboardType: TextInputType.emailAddress,
                 autocorrect: false,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: AppText.input,
                 decoration: const InputDecoration(
                   labelText: 'Email',
-                  prefixIcon: Icon(LucideIcons.mail),
+                  prefixIcon: Icon(LucideIcons.mail, size: 18),
                 ),
                 validator: (v) => (v == null || !v.contains('@')) ? 'Email no válido' : null,
               ),
@@ -121,12 +128,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   keyboardType: TextInputType.number,
                   maxLength: 6,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 22,
-                    letterSpacing: 8,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppText.display,
                   decoration: const InputDecoration(
                     labelText: 'Código',
                     prefixIcon: Icon(LucideIcons.keyRound),
@@ -138,10 +140,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 TextFormField(
                   controller: _passwordCtrl,
                   obscureText: !_showPassword,
-                  style: const TextStyle(color: AppColors.textPrimary),
+                  style: AppText.input,
                   decoration: InputDecoration(
                     labelText: 'Contraseña nueva',
-                    prefixIcon: const Icon(LucideIcons.lock),
+                    prefixIcon: const Icon(LucideIcons.lock, size: 18),
                     suffixIcon: IconButton(
                       tooltip: _showPassword ? 'Ocultar' : 'Mostrar',
                       icon: Icon(_showPassword ? LucideIcons.eyeOff : LucideIcons.eye),
@@ -155,10 +157,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 TextFormField(
                   controller: _confirmCtrl,
                   obscureText: !_showPassword,
-                  style: const TextStyle(color: AppColors.textPrimary),
+                  style: AppText.input,
                   decoration: const InputDecoration(
                     labelText: 'Repite la contraseña',
-                    prefixIcon: Icon(LucideIcons.lock),
+                    prefixIcon: Icon(LucideIcons.lock, size: 18),
                   ),
                   validator: (v) =>
                       v != _passwordCtrl.text ? 'Las contraseñas no coinciden' : null,
@@ -173,20 +175,22 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 onPressed: _codeSent ? _reset : _sendCode,
               ),
               if (_codeSent) ...[
-                const SizedBox(height: 8),
-                TextButton(
+                const SizedBox(height: AppSpace.sm),
+                AppButton(
+                  label: '¿No te llega? Volver a enviar',
+                  variant: AppButtonVariant.ghost,
+                  expand: true,
                   onPressed: _loading
                       ? null
                       : () => setState(() {
                             _codeSent = false;
                             _codeCtrl.clear();
                           }),
-                  child: const Text('¿No te llega? Volver a enviar',
-                      style: TextStyle(color: AppColors.textSecondary)),
                 ),
               ],
             ],
           ),
+        ),
         ),
       ),
     );
