@@ -157,8 +157,17 @@ class _ProPageState extends State<ProPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: AppSpace.lg),
-                        if (!state.isPro)
+                      ],
+                    ),
+                  ),
+                  Reveal(
+                    delay: Reveal.step3,
+                    child: BottomActions(
+                      children: [
+                        if (state.isPro)
+                          _proFooter(status, state.loading)
+                        else ...[
+                          // Precios siempre a la vista, junto a la acción
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -174,16 +183,6 @@ class _ProPageState extends State<ProPage> {
                               ],
                             ],
                           ),
-                      ],
-                    ),
-                  ),
-                  Reveal(
-                    delay: Reveal.step3,
-                    child: BottomActions(
-                      children: [
-                        if (state.isPro)
-                          _proFooter(status, state.loading)
-                        else ...[
                           AppButton(
                             label: 'Empezar ${status.trialDays} días gratis',
                             size: AppButtonSize.lg,
@@ -373,7 +372,7 @@ class _PriceCard extends StatelessWidget {
         child: AnimatedContainer(
           duration: AppMotion.of(context, AppMotion.medium),
           curve: AppMotion.standard,
-          padding: const EdgeInsets.all(AppSpace.lg),
+          padding: const EdgeInsets.all(AppSpace.md),
           decoration: BoxDecoration(
             color: selected ? AppColors.surfaceSelected : AppColors.surfaceRaised,
             borderRadius: BorderRadius.circular(AppRadii.card),
@@ -395,11 +394,11 @@ class _PriceCard extends StatelessWidget {
                   SelectionMark(selected: selected),
                 ],
               ),
-              const SizedBox(height: AppSpace.sm),
-              Text(price.price, style: AppText.display),
+              const SizedBox(height: AppSpace.xs),
+              Text(price.price, style: AppText.title),
               Text(price.period, style: AppText.caption),
               if (price.note != null) ...[
-                const SizedBox(height: AppSpace.sm),
+                const SizedBox(height: AppSpace.xs),
                 Text(price.note!,
                     style: AppText.micro.copyWith(color: AppColors.accent)),
               ],
