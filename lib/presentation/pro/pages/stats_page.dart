@@ -94,7 +94,7 @@ class _StatsPageState extends State<StatsPage> {
                       ? const SizedBox(
                           width: 18,
                           height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(LucideIcons.fileDown),
                 ),
@@ -128,10 +128,7 @@ class _StatsPageState extends State<StatsPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('Estadísticas avanzadas',
-                        style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700)),
+                        style: AppText.section),
                     SizedBox(width: 6),
                     ProBadge(),
                   ],
@@ -140,7 +137,7 @@ class _StatsPageState extends State<StatsPage> {
                 const Text(
                   'Calendario de cumplimiento, tus mejores días e informe en PDF para tu médico.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4),
+                  style: AppText.body,
                 ),
                 const SizedBox(height: 16),
                 AppButton(
@@ -158,7 +155,7 @@ class _StatsPageState extends State<StatsPage> {
 
   Widget _content() {
     if (_loading && _report == null) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+      return const Center(child: CircularProgressIndicator());
     }
     if (_error != null && _report == null) {
       return Center(
@@ -215,7 +212,7 @@ class _StatsPageState extends State<StatsPage> {
           const SizedBox(height: 12),
           _Insight(
             text: r.worstWeekday != null
-                ? 'Tu mejor día es el ${r.bestWeekday!.toLowerCase()}. El ${r.worstWeekday!.toLowerCase()} es cuando más se te olvida: pon un recordatorio extra 💡'
+                ? 'Tu mejor día es el ${r.bestWeekday!.toLowerCase()}. El ${r.worstWeekday!.toLowerCase()} es cuando más se te olvida: pon un recordatorio extra.'
                 : 'Tu mejor día es el ${r.bestWeekday!.toLowerCase()}. ¡Sigue así!',
           ),
         ],
@@ -283,8 +280,7 @@ class _Title extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(text,
-      style: const TextStyle(
-          color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700));
+      style: AppText.section);
 }
 
 class _Tile extends StatelessWidget {
@@ -305,13 +301,13 @@ class _Tile extends StatelessWidget {
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(value,
-                  style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.w800)),
+                  style: AppText.title.copyWith(color: color)),
             ),
             const SizedBox(height: 2),
             Text(label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                style: AppText.micro),
           ],
         ),
       ),
@@ -328,12 +324,12 @@ class _Insight extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.info.withValues(alpha: 0.10),
+        color: AppColors.surfaceSelected,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.ring),
       ),
       child: Text(text,
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, height: 1.4)),
+          style: AppText.body.copyWith(color: AppColors.textPrimary)),
     );
   }
 }
@@ -363,16 +359,12 @@ class _Heatmap extends StatelessWidget {
                     ? AppColors.input
                     : d.complete
                         ? AppColors.success
-                        : Color.lerp(AppColors.input, AppColors.accent, d.ratio),
+                        : Color.lerp(AppColors.input, AppColors.accentStrong, d.ratio),
                 borderRadius: BorderRadius.circular(big ? 8 : 2),
               ),
               child: big
                   ? Text('${d.date.day}',
-                      style: TextStyle(
-                        color: d.complete ? AppColors.onPrimary : AppColors.textSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ))
+                      style: AppText.micro.copyWith(color: d.complete ? AppColors.background : AppColors.textSecondary))
                   : null,
             ),
           ),
@@ -403,22 +395,14 @@ class _Bar extends StatelessWidget {
                 child: Text(label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    style: AppText.body),
               ),
               Text('$percent%',
-                  style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w700)),
+                  style: AppText.label.copyWith(color: color)),
             ],
           ),
           const SizedBox(height: 5),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(99),
-            child: LinearProgressIndicator(
-              value: percent / 100,
-              minHeight: 7,
-              backgroundColor: AppColors.input,
-              color: color,
-            ),
-          ),
+          FlowProgress(value: percent / 100, height: 4),
         ],
       ),
     );
@@ -450,21 +434,18 @@ class _WeekdayChart extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Text(w.days == 0 ? '-' : '${w.completionRate}',
-                        style: const TextStyle(color: AppColors.textMuted, fontSize: 10)),
+                        style: AppText.micro),
                     const SizedBox(height: 4),
                     Container(
                       height: 80 * (w.completionRate / 100) + 2,
                       decoration: BoxDecoration(
-                        gradient: AppGradients.accent,
-                        borderRadius: BorderRadius.circular(6),
+                        color: AppColors.accentStrong,
+                        borderRadius: BorderRadius.circular(AppRadii.chip),
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(_initial(w.weekday),
-                        style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700)),
+                        style: AppText.captionStrong.copyWith(color: AppColors.textSecondary)),
                   ],
                 ),
               ),

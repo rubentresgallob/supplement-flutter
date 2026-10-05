@@ -21,24 +21,15 @@ class ProProfileSection extends StatelessWidget {
               button: true,
               label: state.isPro ? 'Plan Pro activo' : 'Hazte Pro',
               excludeSemantics: true,
-              child: GestureDetector(
+              child: PressableScale(
                 onTap: () => openProPage(context),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.accent.withValues(alpha: 0.22),
-                        AppColors.gold.withValues(alpha: 0.12),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.gold.withValues(alpha: 0.45)),
-                  ),
+                scale: 0.98,
+                child: GlassCard(
+                  borderColor: AppColors.ring,
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.crown, color: AppColors.neonGold, size: 26),
-                      const SizedBox(width: 12),
+                      const IconChip(icon: LucideIcons.crown, highlighted: true),
+                      const SizedBox(width: AppSpace.md),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,11 +38,7 @@ class ProProfileSection extends StatelessWidget {
                               children: [
                                 Text(
                                   state.isPro ? 'Eres Pro' : 'Hazte Pro',
-                                  style: const TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                                  style: AppText.section,
                                 ),
                                 const SizedBox(width: 6),
                                 const ProBadge(),
@@ -64,8 +51,7 @@ class ProProfileSection extends StatelessWidget {
                                       ? 'Activo hasta el ${until.day}/${until.month}/${until.year}'
                                       : 'Activo')
                                   : 'Stock, estadísticas, PDF y ventajas en la tienda',
-                              style: const TextStyle(
-                                  color: AppColors.textSecondary, fontSize: 12.5),
+                              style: AppText.caption,
                             ),
                           ],
                         ),
@@ -81,12 +67,14 @@ class ProProfileSection extends StatelessWidget {
               button: true,
               label: 'Estadísticas',
               excludeSemantics: true,
-              child: GestureDetector(
+              child: PressableScale(
                 onTap: () => Navigator.of(context)
                     .push(MaterialPageRoute(builder: (_) => const StatsPage())),
+                scale: 0.98,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: AppDecorations.frame(radius: 16),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.lg, vertical: AppSpace.md),
+                  decoration: AppDecorations.frame(),
                   child: Row(
                     children: [
                       const Icon(LucideIcons.chartColumn,
@@ -94,10 +82,7 @@ class ProProfileSection extends StatelessWidget {
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text('Estadísticas',
-                            style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500)),
+                            style: AppText.label),
                       ),
                       if (!state.isPro) ...[
                         const Icon(LucideIcons.lock, color: AppColors.textMuted, size: 15),
