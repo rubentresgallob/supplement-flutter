@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/datasources/friends_remote_datasource.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/ui/ui.dart';
 import '../../../core/services/notification_service.dart';
 import '../../rewards/bloc/rewards_cubit.dart';

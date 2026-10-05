@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/mascot/capsu.dart';
 import '../../../core/widgets/ui/ui.dart';
 import '../../../data/datasources/rewards_remote_datasource.dart';
@@ -61,15 +60,13 @@ class _ShopPageState extends State<ShopPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bgDeep,
-      body: SafeArea(
+      body: AmbientBackground(
+        child: SafeArea(
         bottom: false,
         child: BlocBuilder<RewardsCubit, RewardsState>(
           builder: (context, state) {
             if (state.loading && state.summary == null) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppColors.accent),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
             // Error dentro de la pestaña (no toast: la tienda está montada aunque no se vea)
             if (state.summary == null && state.error != null) {
@@ -81,7 +78,6 @@ class _ShopPageState extends State<ShopPage> {
                   description: state.error!,
                   action: AppButton(
                     label: 'Reintentar',
-                    icon: LucideIcons.refreshCw,
                     onPressed: context.read<RewardsCubit>().load,
                   ),
                 ),
@@ -95,13 +91,14 @@ class _ShopPageState extends State<ShopPage> {
 
             return RefreshIndicator(
               color: AppColors.accent,
+              backgroundColor: AppColors.surfaceRaised,
               onRefresh: context.read<RewardsCubit>().load,
               child: CustomScrollView(
                 slivers: [
                   SliverToBoxAdapter(child: _header(state)),
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpace.screen),
                       child: _FittingRoom(
                         state: state,
                         preview: _preview,
@@ -112,13 +109,14 @@ class _ShopPageState extends State<ShopPage> {
                   if (state.summary != null)
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                        padding: const EdgeInsets.fromLTRB(
+                            AppSpace.screen, AppSpace.lg, AppSpace.screen, 0),
                         child: _WeeklyGoalsCard(goals: state.summary!.weeklyGoals),
                       ),
                     ),
                   SliverToBoxAdapter(child: _filterChips()),
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpace.screen),
                     sliver: SliverGrid(
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
@@ -140,12 +138,13 @@ class _ShopPageState extends State<ShopPage> {
                   if (state.summary != null) ...[
                     const SliverToBoxAdapter(
                       child: Padding(
-                        padding: EdgeInsets.fromLTRB(20, 28, 20, 12),
+                        padding: EdgeInsets.fromLTRB(
+                            AppSpace.screen, AppSpace.xxl, AppSpace.screen, AppSpace.md),
                         child: _SectionTitle('Logros'),
                       ),
                     ),
                     SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpace.screen),
                       sliver: SliverGrid(
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
@@ -168,28 +167,24 @@ class _ShopPageState extends State<ShopPage> {
             );
           },
         ),
+        ),
       ),
     );
   }
 
   Widget _header(RewardsState state) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.screen, AppSpace.lg, AppSpace.md, AppSpace.lg),
       child: Row(
         children: [
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Gasta tus puntos',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-                SizedBox(height: 2),
-                Text('Tienda',
-                    style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.5)),
+                Text('Gasta tus puntos', style: AppText.brandSubtitle),
+                SizedBox(height: AppSpace.xs),
+                Text('Tienda', style: AppText.title),
               ],
             ),
           ),
@@ -209,7 +204,8 @@ class _ShopPageState extends State<ShopPage> {
       height: 64,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpace.screen, AppSpace.lg, AppSpace.screen, AppSpace.sm),
         itemCount: _filters.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
@@ -254,11 +250,12 @@ class _FittingRoom extends StatelessWidget {
     }
 
     final colors = banner != null && banner.colors.length >= 2
-        ? banner.colors.map((c) => c.withValues(alpha: 0.55)).toList()
-        : const [Color(0xFF1F1F1F), Color(0xFF181818)];
+        ? banner.colors.map((c) => c.withValues(alpha: 0.4)).toList()
+        : AppColors.cardGradient;
 
     return AnimatedContainer(
       duration: AppMotion.of(context, AppMotion.slow),
+      curve: AppMotion.emphasized,
       height: 190,
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -266,24 +263,30 @@ class _FittingRoom extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.border),
       ),
       child: Stack(
         children: [
           Align(
-            alignment: const Alignment(-0.55, 0.4),
-            child: Capsu(
-              size: 112,
-              mood: p != null ? CapsuMood.happy : CapsuMood.wave,
-              outfit: outfit,
+            alignment: const Alignment(-0.6, 0.3),
+            child: HeroGlow(
+              size: 170,
+              child: Floating(
+                amplitude: 4,
+                child: Capsu(
+                  size: 112,
+                  mood: p != null ? CapsuMood.happy : CapsuMood.wave,
+                  outfit: outfit,
+                ),
+              ),
             ),
           ),
           if (medal != null)
             Positioned(
-              left: 16,
-              top: 14,
-              child: Text(medal.icon, style: const TextStyle(fontSize: 30)),
+              left: AppSpace.lg,
+              top: AppSpace.lg,
+              child: MedalIcon(medal: medal, size: 32),
             ),
           Positioned(
             right: 16,
@@ -294,8 +297,9 @@ class _FittingRoom extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _Pill(
+                AppPill(
                   icon: LucideIcons.shield,
+                  color: AppColors.textPrimary,
                   text: '${state.protectors} protector${state.protectors == 1 ? '' : 'es'}',
                 ),
                 Expanded(
@@ -308,12 +312,7 @@ class _FittingRoom extends StatelessWidget {
                       textAlign: TextAlign.right,
                       maxLines: 4,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        height: 1.3,
-                      ),
+                      style: p != null ? AppText.label : AppText.body,
                     ),
                   ),
                 ),
@@ -326,37 +325,6 @@ class _FittingRoom extends StatelessWidget {
                   ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _Pill({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: AppColors.info),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(text,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -386,13 +354,9 @@ class _WeeklyGoalsCard extends StatelessWidget {
                 child: Text('Objetivos de la semana',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700)),
+                    style: AppText.label),
               ),
-              Text('+10 💎/día completo',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+              Text('+10 al día', style: AppText.micro),
             ],
           ),
           for (final g in goals) ...[
@@ -402,33 +366,17 @@ class _WeeklyGoalsCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     g.title,
-                    style: TextStyle(
-                      color: g.completed ? AppColors.success : AppColors.textSecondary,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppText.captionStrong.copyWith(color: g.completed ? AppColors.success : AppColors.textSecondary),
                   ),
                 ),
                 Text(
-                  g.completed ? '✓ +${g.points}' : '${g.progress}/${g.target} · +${g.points} 💎',
-                  style: TextStyle(
-                    color: g.completed ? AppColors.success : AppColors.textMuted,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  g.completed ? '+${g.points}' : '${g.progress}/${g.target} · +${g.points}',
+                  style: AppText.micro.copyWith(color: g.completed ? AppColors.success : AppColors.textMuted),
                 ),
               ],
             ),
             const SizedBox(height: 6),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(99),
-              child: LinearProgressIndicator(
-                value: g.progress / g.target,
-                minHeight: 6,
-                backgroundColor: AppColors.input,
-                color: g.completed ? AppColors.success : AppColors.accent,
-              ),
-            ),
+            FlowProgress(value: g.progress / g.target, height: 4),
           ],
         ],
       ),
@@ -456,6 +404,7 @@ class _ItemCard extends StatelessWidget {
     final color = rarityColor(item.rarity);
     final String status;
     final Color statusColor;
+    IconData? statusIcon;
     if (item.equipped) {
       status = 'Equipado';
       statusColor = AppColors.success;
@@ -466,31 +415,24 @@ class _ItemCard extends StatelessWidget {
       status = 'En tu colección';
       statusColor = AppColors.textSecondary;
     } else if (item.exclusive) {
-      status = '🔒 Exclusivo';
+      status = 'Exclusivo';
+      statusIcon = LucideIcons.lock;
       statusColor = AppColors.textMuted;
     } else {
-      status = '💎 ${item.price}';
-      statusColor = points >= item.price! ? AppColors.neonGold : AppColors.textMuted;
+      status = '${item.price}';
+      statusIcon = LucideIcons.gem;
+      statusColor = points >= item.price! ? AppColors.textPrimary : AppColors.textMuted;
     }
 
     return Semantics(
       button: true,
       label: '${item.name}, $status',
       excludeSemantics: true,
-      child: GestureDetector(
+      child: PressableScale(
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.bgCard,
-            borderRadius: BorderRadius.circular(AppRadius.xxl),
-            border: Border.all(
-              color: item.equipped
-                  ? AppColors.success.withValues(alpha: 0.6)
-                  : color.withValues(alpha: 0.35),
-              width: item.equipped ? 1.5 : 1,
-            ),
-          ),
+        child: GlassCard(
+          padding: const EdgeInsets.all(AppSpace.md),
+          borderColor: item.equipped ? AppColors.ring : AppColors.border,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -498,16 +440,11 @@ class _ItemCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      rarityLabel(item.rarity).toUpperCase(),
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.8,
-                      ),
+                      rarityLabel(item.rarity),
+                      style: AppText.micro.copyWith(color: color),
                     ),
                   ),
-                  if (item.proOnly) const ProBadge(fontSize: 8.5),
+                  if (item.proOnly) const ProBadge(),
                 ],
               ),
               Expanded(
@@ -522,20 +459,24 @@ class _ItemCard extends StatelessWidget {
                 item.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppText.label,
               ),
-              const SizedBox(height: 3),
-              Text(
-                status,
-                style: TextStyle(
-                  color: statusColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
+              const SizedBox(height: AppSpace.xs),
+              Row(
+                children: [
+                  if (statusIcon != null) ...[
+                    Icon(statusIcon, size: 12, color: statusColor),
+                    const SizedBox(width: AppSpace.xs),
+                  ],
+                  Flexible(
+                    child: Text(
+                      status,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.captionStrong.copyWith(color: statusColor),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -581,7 +522,7 @@ class _ItemSheet extends StatelessWidget {
           label = item.equipped ? 'Quitar' : 'Equipar';
           variant = item.equipped ? AppButtonVariant.outline : AppButtonVariant.primary;
           onPressed = () => _run(context, () => cubit.toggleEquip(item),
-              item.equipped ? 'Objeto quitado' : '¡Equipado!');
+              item.equipped ? 'Objeto quitado' : 'Equipado');
         } else if (item.proOnly && !context.watch<ProCubit>().state.isPro) {
           label = 'Hazte Pro para conseguirlo';
           onPressed = () => openProPage(context);
@@ -592,10 +533,10 @@ class _ItemSheet extends StatelessWidget {
         } else if (item.isMaxed) {
           label = 'Tienes el máximo (${item.maxOwned})';
         } else if (state.points < item.price!) {
-          label = 'Comprar · 💎 ${item.price}';
+          label = 'Comprar · ${item.price} puntos';
           hint = 'Te faltan ${item.price! - state.points} puntos.';
         } else {
-          label = 'Comprar · 💎 ${item.price}';
+          label = 'Comprar · ${item.price} puntos';
           onPressed = () => _run(context, () async {
                 final error = await cubit.buy(item.code);
                 // Los objetos de colección se equipan solos al comprarlos
@@ -606,7 +547,7 @@ class _ItemSheet extends StatelessWidget {
                   }
                 }
                 return error;
-              }, '¡Comprado!');
+              }, 'Comprado');
         }
 
         return Container(
@@ -624,50 +565,43 @@ class _ItemSheet extends StatelessWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.border,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(AppRadii.chip),
                 ),
               ),
               const SizedBox(height: 20),
               SizedBox(
-                height: 130,
+                height: 140,
                 child: Center(
-                  child: ShopItemPreview(
-                      item: item, size: 120, baseOutfit: state.outfit),
+                  child: HeroGlow(
+                    size: 180,
+                    child: Floating(
+                      amplitude: 4,
+                      child: ShopItemPreview(
+                          item: item, size: 120, baseOutfit: state.outfit),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               Text(
-                rarityLabel(item.rarity).toUpperCase(),
-                style: TextStyle(
-                  color: rarityColor(item.rarity),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1,
-                ),
+                rarityLabel(item.rarity),
+                style: AppText.brandSubtitle.copyWith(color: rarityColor(item.rarity)),
               ),
               const SizedBox(height: 4),
               Text(
                 item.name,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppText.title,
               ),
               const SizedBox(height: 8),
               Text(
                 item.description,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                  height: 1.4,
-                ),
+                style: AppText.body,
               ),
               if (item.isConsumable && item.isOwned) ...[
                 const SizedBox(height: 8),
                 Text('Tienes ${item.owned} de ${item.maxOwned}',
-                    style: const TextStyle(color: AppColors.info, fontSize: 13)),
+                    style: AppText.body.copyWith(color: AppColors.info)),
               ],
               const SizedBox(height: 20),
               AppButton(
@@ -681,7 +615,7 @@ class _ItemSheet extends StatelessWidget {
               if (hint != null) ...[
                 const SizedBox(height: 8),
                 Text(hint,
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                    style: AppText.caption),
               ],
             ],
           ),
@@ -707,28 +641,25 @@ class _AchievementTile extends StatelessWidget {
       child: GestureDetector(
         onTap: () => AppToast.info(
           context,
-          '${a.unlocked ? '✅' : '🔒'} ${a.title}: ${a.description} '
-          '(+${a.points} 💎${a.rewardItem != null ? ' + medalla exclusiva' : ''})',
+          '${a.title}: ${a.description} '
+          '(+${a.points} puntos${a.rewardItem != null ? ' y medalla exclusiva' : ''})',
         ),
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: a.unlocked
-                ? AppColors.gold.withValues(alpha: 0.10)
-                : AppColors.bgCard,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
+            color: a.unlocked ? AppColors.surfaceSelected : AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadii.button),
             border: Border.all(
-              color: a.unlocked
-                  ? AppColors.gold.withValues(alpha: 0.45)
-                  : AppColors.border,
+              color: a.unlocked ? AppColors.ring : AppColors.border,
             ),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Opacity(
-                opacity: a.unlocked ? 1 : 0.3,
-                child: Text(a.icon, style: const TextStyle(fontSize: 28)),
+                opacity: a.unlocked ? 1 : 0.4,
+                child: IconChip(
+                    icon: achievementIcon(a.code), highlighted: a.unlocked),
               ),
               const SizedBox(height: 6),
               Text(
@@ -736,12 +667,7 @@ class _AchievementTile extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: a.unlocked ? AppColors.textPrimary : AppColors.textMuted,
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                  height: 1.2,
-                ),
+                style: AppText.micro.copyWith(color: a.unlocked ? AppColors.textPrimary : AppColors.textMuted),
               ),
             ],
           ),
@@ -758,11 +684,7 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         text,
-        style: const TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-        ),
+        style: AppText.section,
       );
 }
 
@@ -789,10 +711,7 @@ class _HistorySheet extends StatelessWidget {
                 Icon(LucideIcons.history, color: AppColors.textSecondary, size: 18),
                 SizedBox(width: 8),
                 Text('Historial de puntos',
-                    style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700)),
+                    style: AppText.section),
               ],
             ),
           ),
@@ -807,14 +726,12 @@ class _HistorySheet extends StatelessWidget {
                   );
                 }
                 if (!snap.hasData) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AppColors.accent),
-                  );
+                  return const Center(child: CircularProgressIndicator());
                 }
                 final moves = snap.data!;
                 if (moves.isEmpty) {
                   return const Center(
-                    child: Text('Aún no has ganado puntos.\n¡Completa tu primer día!',
+                    child: Text('Aún no has ganado puntos.\nCompleta tu primer día.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: AppColors.textMuted)),
                   );
@@ -836,24 +753,18 @@ class _HistorySheet extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(m.reason,
-                                    style: const TextStyle(
-                                        color: AppColors.textPrimary, fontSize: 14)),
+                                    style: AppText.body.copyWith(color: AppColors.textPrimary)),
                                 const SizedBox(height: 2),
                                 Text(
                                   '${m.createdAt.day}/${m.createdAt.month}/${m.createdAt.year}',
-                                  style: const TextStyle(
-                                      color: AppColors.textMuted, fontSize: 11.5),
+                                  style: AppText.micro,
                                 ),
                               ],
                             ),
                           ),
                           Text(
                             '${positive ? '+' : ''}${m.amount}',
-                            style: TextStyle(
-                              color: positive ? AppColors.success : AppColors.error,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: AppText.navTitle.copyWith(color: positive ? AppColors.success : AppColors.error),
                           ),
                         ],
                       ),

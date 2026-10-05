@@ -221,7 +221,7 @@ void main() {
 
       expect(find.text('Tienda'), findsOneWidget);
       expect(find.text('Gorra deportiva'), findsOneWidget);
-      await tester.scrollUntilVisible(find.text('🔒 Exclusivo'), 200,
+      await tester.scrollUntilVisible(find.text('Exclusivo'), 200,
           scrollable: find.byType(Scrollable).first);
       expect(find.text('Primer paso'), findsNothing); // logros más abajo
       await tester.scrollUntilVisible(find.text('Primer paso'), 200,
@@ -232,9 +232,9 @@ void main() {
 
       await tester.tap(find.text('Gorra deportiva'));
       await _frames(tester);
-      expect(find.text('Comprar · 💎 120'), findsOneWidget);
+      expect(find.text('Comprar · 120 puntos'), findsOneWidget);
 
-      await tester.tap(find.text('Comprar · 💎 120'));
+      await tester.tap(find.text('Comprar · 120 puntos'));
       await _frames(tester, 30);
       expect(fake.bought, ['capsu_head_cap']);
       // Se equipa sola al comprarla

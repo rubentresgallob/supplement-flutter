@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
-import '../../constants/app_constants.dart';
 import '../../theme/app_tokens.dart';
 
 /// Diálogo de confirmación (forui `FDialog`). Devuelve `true` si se confirma.

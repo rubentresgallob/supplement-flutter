@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/mascot/capsu.dart';
 import '../../../core/widgets/ui/ui.dart';
 import '../../../data/datasources/auth_remote_datasource.dart';

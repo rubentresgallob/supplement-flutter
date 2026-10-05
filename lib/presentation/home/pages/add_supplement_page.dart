@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/datasources/supplements_remote_datasource.dart';
 import '../../../data/datasources/local_storage_datasource.dart';
 import '../../../data/models/supplement_database_model.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/mascot/capsu.dart';
 import '../../../core/widgets/ui/ui.dart';
 import '../../../core/services/notification_service.dart';

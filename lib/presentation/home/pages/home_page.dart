@@ -19,7 +19,6 @@ import '../../pro/pages/pro_page.dart';
 import '../../../data/datasources/pro_remote_datasource.dart';
 import '../../rewards/pages/shop_page.dart';
 import '../../rewards/widgets/rewards_widgets.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/mascot/capsu.dart';
 import '../../../core/widgets/ui/ui.dart';
 import '../../../core/services/notification_service.dart';

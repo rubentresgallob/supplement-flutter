@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../domain/entities/user_supplement.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/ui/ui.dart';
 
 class SupplementCard extends StatefulWidget {

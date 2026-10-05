@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../constants/app_constants.dart';
 import '../../theme/app_tokens.dart';
 
 /// Skeleton con brillo diagonal (120°) como `Skeleton` de coss.

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/mascot/capsu.dart';
 import '../../../core/widgets/ui/ui.dart';
 import '../../../data/models/rewards_models.dart';
@@ -11,11 +10,61 @@ import '../bloc/rewards_cubit.dart';
 
 /// Color de cada rareza (borde y etiqueta de los objetos).
 Color rarityColor(String rarity) => switch (rarity) {
-      'rare' => AppColors.info,
-      'epic' => const Color(0xFFA78BFA),
-      'legendary' => AppColors.gold,
+      'rare' => AppColors.mint,
+      'epic' => AppColors.accent,
+      'legendary' => AppColors.pink,
       _ => AppColors.textMuted,
     };
+
+/// Icono de cada objeto de la tienda (el backend manda un emoji; aquí se
+/// traduce por `code` al set de iconos de la app).
+IconData shopItemIcon(ShopItem item) => switch (item.code) {
+      'medal_capsule' => LucideIcons.pill,
+      'medal_streak_30' => LucideIcons.flame,
+      'medal_streak_100' => LucideIcons.award,
+      'medal_streak_365' => LucideIcons.crown,
+      'medal_pro_diamond' => LucideIcons.gem,
+      'banner_sunrise' => LucideIcons.sunrise,
+      'banner_ocean' => LucideIcons.waves,
+      'banner_forest' => LucideIcons.treePine,
+      'banner_galaxy' => LucideIcons.orbit,
+      'banner_aurora' => LucideIcons.sparkles,
+      _ => switch (item.category) {
+          'medal' => LucideIcons.medal,
+          'banner' => LucideIcons.image,
+          'consumable' => LucideIcons.shield,
+          'capsu' => LucideIcons.sparkles,
+          _ => LucideIcons.gift,
+        },
+    };
+
+/// Icono de cada logro.
+IconData achievementIcon(String code) => switch (code) {
+      'first_intake' => LucideIcons.pill,
+      'first_day' => LucideIcons.calendarCheck,
+      'supplements_3' => LucideIcons.flaskConical,
+      'first_friend' => LucideIcons.handshake,
+      'friends_5' => LucideIcons.usersRound,
+      'first_item' => LucideIcons.shoppingBag,
+      'streak_100' => LucideIcons.award,
+      'streak_365' => LucideIcons.crown,
+      _ => code.startsWith('streak_') ? LucideIcons.flame : LucideIcons.trophy,
+    };
+
+/// Medalla equipada: icono en un chip con el color de su rareza.
+class MedalIcon extends StatelessWidget {
+  final ShopItem medal;
+  final double size;
+  const MedalIcon({super.key, required this.medal, this.size = 28});
+
+  @override
+  Widget build(BuildContext context) => IconChip(
+        icon: shopItemIcon(medal),
+        size: size,
+        highlighted: true,
+        color: rarityColor(medal.rarity),
+      );
+}
 
 String rarityLabel(String rarity) => switch (rarity) {
       'rare' => 'Raro',
@@ -42,28 +91,16 @@ class PointsChip extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            color: AppColors.gold.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
+            color: AppColors.surfaceRaised,
+            borderRadius: BorderRadius.circular(AppRadii.pill),
+            border: Border.all(color: AppColors.border),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(LucideIcons.gem, color: AppColors.neonGold, size: 15),
+              const Icon(LucideIcons.gem, color: AppColors.accent, size: 15),
               const SizedBox(width: 5),
-              TweenAnimationBuilder<double>(
-                tween: Tween(end: points.toDouble()),
-                duration: AppMotion.of(context, const Duration(milliseconds: 900)),
-                curve: Curves.easeOutCubic,
-                builder: (_, v, __) => Text(
-                  '${v.round()}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
+              CountUp(value: points, style: AppText.captionStrong),
             ],
           ),
         ),
@@ -72,7 +109,7 @@ class PointsChip extends StatelessWidget {
   }
 }
 
-/// Vista previa de un objeto: Capsu con el accesorio, degradado del banner o emoji.
+/// Vista previa de un objeto: Capsu con el accesorio, degradado del banner o icono.
 class ShopItemPreview extends StatelessWidget {
   final ShopItem item;
   final double size;
@@ -103,10 +140,16 @@ class ShopItemPreview extends StatelessWidget {
           gradient: LinearGradient(colors: item.colors),
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
-        child: Text(item.icon, style: TextStyle(fontSize: size * 0.38)),
+        child: Icon(shopItemIcon(item),
+            size: size * 0.36, color: AppColors.textPrimary),
       );
     }
-    return Text(item.icon, style: TextStyle(fontSize: size * 0.62));
+    return IconChip(
+      icon: shopItemIcon(item),
+      size: size * 0.9,
+      highlighted: true,
+      color: rarityColor(item.rarity),
+    );
   }
 }
 
@@ -134,10 +177,10 @@ class RewardPopup {
     );
     _current = entry;
     overlay.insert(entry);
-    _timer = Timer(const Duration(milliseconds: 4200), dismiss);
+    _timer = Timer(AppMotion.hero * 6, dismiss);
 
     final text = celebration.rewards.isNotEmpty
-        ? '¡Has ganado ${celebration.totalPoints} puntos!'
+        ? 'Has ganado ${celebration.totalPoints} puntos'
         : 'Tu protector ha salvado la racha';
     SemanticsService.sendAnnouncement(
         View.of(context), text, Directionality.of(context));
@@ -167,14 +210,16 @@ class _RewardPopupView extends StatelessWidget {
     final lines = [
       if (celebration.repairedDays.isNotEmpty)
         (
-          '🛡️',
+          LucideIcons.shieldCheck,
           celebration.repairedDays.length == 1
               ? 'Protector usado: racha salvada'
               : '${celebration.repairedDays.length} protectores usados: racha salvada',
           null as int?,
         ),
       for (final r in celebration.rewards)
-        r.points > 0 ? ('💎', r.reason, r.points) : ('🎁', r.reason, null as int?),
+        r.points > 0
+            ? (LucideIcons.gem, r.reason, r.points)
+            : (LucideIcons.gift, r.reason, null as int?),
     ];
 
     return SafeArea(
@@ -184,10 +229,10 @@ class _RewardPopupView extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
           child: TweenAnimationBuilder<double>(
             tween: Tween(begin: 0, end: 1),
-            duration: AppMotion.of(context, const Duration(milliseconds: 500)),
-            curve: Curves.easeOutBack,
-            builder: (_, v, child) => Transform.translate(
-              offset: Offset(0, -40 * (1 - v)),
+            duration: AppMotion.of(context, AppMotion.hero),
+            curve: AppMotion.pop,
+            builder: (_, v, child) => Transform.scale(
+              scale: 0.8 + 0.2 * v,
               child: Opacity(opacity: v.clamp(0, 1), child: child),
             ),
             child: Material(
@@ -200,11 +245,8 @@ class _RewardPopupView extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.bgCardElevated,
                     borderRadius: BorderRadius.circular(AppRadius.xxl),
-                    border: Border.all(color: AppColors.gold.withValues(alpha: 0.45)),
-                    boxShadow: [
-                      ...AppShadows.md,
-                      ...AppShadows.glow(AppColors.gold, strength: 0.2),
-                    ],
+                    border: Border.all(color: AppColors.ring),
+                    boxShadow: AppShadows.glow(AppColors.accentStrong),
                   ),
                   child: Row(
                     children: [
@@ -223,24 +265,25 @@ class _RewardPopupView extends StatelessWidget {
                             if (celebration.totalPoints > 0)
                               Text(
                                 '+${celebration.totalPoints} puntos',
-                                style: const TextStyle(
-                                  color: AppColors.neonGold,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                                style: AppText.section,
                               ),
                             for (final (icon, text, pts) in lines.take(4))
                               Padding(
                                 padding: const EdgeInsets.only(top: 2),
-                                child: Text(
-                                  pts == null ? '$icon $text' : '$icon $text  +$pts',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                child: Row(
+                                  children: [
+                                    Icon(icon, size: 12, color: AppColors.accent),
+                                    const SizedBox(width: AppSpace.xs),
+                                    Expanded(
+                                      child: Text(
+                                        pts == null ? text : '$text  +$pts',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppText.caption
+                                            .copyWith(color: AppColors.textSecondary),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                           ],
@@ -278,7 +321,7 @@ class StreakRepairCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.bgCardElevated,
         borderRadius: BorderRadius.circular(AppRadius.xxl),
-        border: Border.all(color: AppColors.warning.withValues(alpha: 0.45)),
+        border: Border.all(color: AppColors.ring),
       ),
       child: Row(
         children: [
@@ -289,23 +332,15 @@ class StreakRepairCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  '¡Se ha roto tu racha!',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  'Se ha roto tu racha',
+                  style: AppText.navTitle,
                 ),
                 const SizedBox(height: 3),
                 Text(
                   days == 1
-                      ? 'Fallaste 1 día. Recupérala con $missing protector 🛡️ antes de 48 h.'
-                      : 'Fallaste $days días. Te faltan $missing protectores 🛡️ para recuperarla.',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12.5,
-                    height: 1.35,
-                  ),
+                      ? 'Fallaste 1 día. Recupérala con $missing protector antes de 48 h.'
+                      : 'Fallaste $days días. Te faltan $missing protectores para recuperarla.',
+                  style: AppText.caption.copyWith(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 10),
                 AppButton(
