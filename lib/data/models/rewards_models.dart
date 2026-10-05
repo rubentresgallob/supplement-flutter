@@ -76,7 +76,7 @@ class ShopItem extends Equatable {
         category: json['category'] as String,
         slot: json['slot'] as String?,
         price: json['price'] as int?,
-        icon: json['icon'] as String? ?? '🎁',
+        icon: json['icon'] as String? ?? '',
         rarity: json['rarity'] as String? ?? 'common',
         maxOwned: json['maxOwned'] as int? ?? 1,
         colors: (json['colors'] as List<dynamic>? ?? [])

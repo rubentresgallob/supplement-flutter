@@ -437,7 +437,7 @@ class _IntakeDemoState extends State<_IntakeDemo> {
                 color: done
                     ? AppColors.success
                     : _taken > 0
-                        ? AppColors.primary
+                        ? AppColors.accentStrong
                         : AppColors.textMuted,
                 width: 2,
               ),

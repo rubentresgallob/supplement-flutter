@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/home_bloc.dart';
@@ -35,10 +35,8 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+class _HomePageState extends State<HomePage> {
   int _currentTab = 0;
-  late final AnimationController _fabPulseCtrl;
-  late final Animation<double> _fabPulse;
 
   bool _showCelebration = false;
   bool _prevAllComplete = false;
@@ -63,35 +61,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       if (!mounted) return;
       RewardPopup.show(context, celebration, outfit: rewards.state.outfit);
     });
-    _fabPulseCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1800),
-    );
-    _fabPulse = CurvedAnimation(parent: _fabPulseCtrl, curve: Curves.easeOut);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Pulso del FAB desactivado si el usuario pide reducir movimiento
-    if (AppMotion.reduced(context)) {
-      _fabPulseCtrl.stop();
-    } else if (!_fabPulseCtrl.isAnimating) {
-      _fabPulseCtrl.repeat();
-    }
   }
 
   @override
   void dispose() {
     _rewardsSub?.cancel();
     RewardPopup.dismiss();
-    _fabPulseCtrl.dispose();
     super.dispose();
   }
 
   void _triggerCelebration() {
+    HapticFeedback.mediumImpact();
     setState(() => _showCelebration = true);
-    Future.delayed(const Duration(milliseconds: 4500), () {
+    Future.delayed(_CelebrationOverlay.duration + AppMotion.slow, () {
       if (mounted) setState(() => _showCelebration = false);
     });
   }
@@ -123,7 +105,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: Stack(
         children: [
           Scaffold(
-            backgroundColor: AppColors.bgDeep,
             body: IndexedStack(
               index: _currentTab,
               children: [
@@ -148,20 +129,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildBottomNav() {
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Color(0xD9121212),
-            border: Border(top: BorderSide(color: AppColors.border)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: SizedBox(
-              height: 64,
-              child: Row(
-                children: [
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.background,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            children: [
                   _NavItem(
                     icon: LucideIcons.flame,
                     activeIcon: LucideIcons.flame,
@@ -190,9 +168,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     isActive: _currentTab == _profileTab,
                     onTap: () => setState(() => _currentTab = _profileTab),
                   ),
-                ],
-              ),
-            ),
+            ],
           ),
         ),
       ),
@@ -200,51 +176,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildFAB() {
-    return AnimatedBuilder(
-      animation: _fabPulse,
-      builder: (context, child) {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              width: 60 + 44 * _fabPulse.value,
-              height: 60 + 44 * _fabPulse.value,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primary
-                      .withValues(alpha: (1.0 - _fabPulse.value) * 0.35),
-                  width: 2,
-                ),
-              ),
-            ),
-            child!,
-          ],
-        );
-      },
-      child: Semantics(
-        button: true,
-        label: 'Añadir suplemento',
-        child: GestureDetector(
+    return Semantics(
+      button: true,
+      label: 'Añadir suplemento',
+      child: PressableScale(
         onTap: _openAddSupplement,
+        scale: 0.92,
         child: Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
+          width: 56,
+          height: 56,
+          decoration: const BoxDecoration(
             shape: BoxShape.circle,
             color: AppColors.primary,
-            border: Border.all(color: Colors.white),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
           ),
-          child: const Icon(LucideIcons.plus, color: AppColors.onPrimary, size: 28),
+          child: const Icon(LucideIcons.plus,
+              color: AppColors.onPrimary, size: 26),
         ),
-      ),
       ),
     );
   }
@@ -276,17 +223,19 @@ class _ConfettiParticle {
         isCircle = rng.nextBool(),
         color = const [
           AppColors.accent,
-          AppColors.gold,
-          AppColors.success,
-          Colors.white,
-          Color(0xFFFF3D00),
-          Color(0xFF00E5FF),
-        ][rng.nextInt(6)];
+          AppColors.accentStrong,
+          AppColors.mint,
+          AppColors.pink,
+          AppColors.textPrimary,
+        ][rng.nextInt(5)];
 }
 
 class _CelebrationOverlay extends StatefulWidget {
   final CapsuOutfit outfit;
   const _CelebrationOverlay({this.outfit = CapsuOutfit.none});
+
+  /// Momento protagonista del día: lo que dura la celebración completa.
+  static final duration = AppMotion.hero * 5;
 
   @override
   State<_CelebrationOverlay> createState() => _CelebrationOverlayState();
@@ -304,7 +253,7 @@ class _CelebrationOverlayState extends State<_CelebrationOverlay>
     _particles = List.generate(70, (_) => _ConfettiParticle(rng));
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 4000),
+      duration: _CelebrationOverlay.duration,
     )..forward();
   }
 
@@ -333,7 +282,7 @@ class _CelebrationOverlayState extends State<_CelebrationOverlay>
               // Scrim oscuro que se desvanece
               Opacity(
                 opacity: (0.6 * (1 - t * 0.7)).clamp(0.0, 1.0),
-                child: const ColoredBox(color: Colors.black),
+                child: const ColoredBox(color: AppColors.background),
               ),
               // Confetti
               CustomPaint(
@@ -344,7 +293,7 @@ class _CelebrationOverlayState extends State<_CelebrationOverlay>
                 child: Opacity(
                   opacity: contentOpacity.clamp(0.0, 1.0),
                   child: Transform.scale(
-                    scale: 0.5 + 0.5 * Curves.elasticOut
+                    scale: 0.5 + 0.5 * AppMotion.pop
                         .transform((t * 2).clamp(0.0, 1.0)),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -357,50 +306,25 @@ class _CelebrationOverlayState extends State<_CelebrationOverlay>
                           outfit: widget.outfit,
                         ),
                         const SizedBox(height: 8),
-                        // Badge de texto
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 28, vertical: 14),
-                          decoration: BoxDecoration(
-                            gradient: AppGradients.accent,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.accent.withValues(alpha: 0.55),
-                                blurRadius: 28,
-                                spreadRadius: 4,
-                              ),
-                            ],
-                          ),
-                          child: const Column(
+                        const GlassCard(
+                          borderColor: AppColors.ring,
+                          padding: EdgeInsets.symmetric(
+                              horizontal: AppSpace.xl, vertical: AppSpace.lg),
+                          child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(LucideIcons.flame,
-                                      color: AppColors.onPrimary, size: 22),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    '¡Racha del día!',
-                                    style: TextStyle(
-                                      color: AppColors.onPrimary,
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: -0.5,
-                                    ),
-                                  ),
+                                      color: AppColors.accent, size: 20),
+                                  SizedBox(width: AppSpace.sm),
+                                  Text('Racha del día', style: AppText.title),
                                 ],
                               ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Todos los suplementos tomados',
-                                style: TextStyle(
-                                  color: Color(0xB31A0B02),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+                              SizedBox(height: AppSpace.xs),
+                              Text('Todos los suplementos tomados',
+                                  style: AppText.body),
                             ],
                           ),
                         ),
@@ -460,7 +384,7 @@ class _ConfettiPainter extends CustomPainter {
 
 // ─── NavItem ─────────────────────────────────────────────────────────────────
 
-class _NavItem extends StatefulWidget {
+class _NavItem extends StatelessWidget {
   final IconData icon;
   final IconData activeIcon;
   final String label;
@@ -476,123 +400,37 @@ class _NavItem extends StatefulWidget {
   });
 
   @override
-  State<_NavItem> createState() => _NavItemState();
-}
-
-class _NavItemState extends State<_NavItem>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _bounceCtrl;
-  late final Animation<double> _bounceScale;
-
-  @override
-  void initState() {
-    super.initState();
-    _bounceCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
-    _bounceScale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.80), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 0.80, end: 1.20), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 1.20, end: 1.0), weight: 1),
-    ]).animate(CurvedAnimation(parent: _bounceCtrl, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _bounceCtrl.dispose();
-    super.dispose();
-  }
-
-  void _handleTap() {
-    _bounceCtrl.forward(from: 0);
-    widget.onTap();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final color = isActive ? AppColors.textPrimary : AppColors.textMuted;
     return Expanded(
       child: Semantics(
         button: true,
-        selected: widget.isActive,
-        label: widget.label,
+        selected: isActive,
+        label: label,
         excludeSemantics: true,
-        child: GestureDetector(
-        onTap: _handleTap,
-        behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ScaleTransition(
-              scale: _bounceScale,
-              child: SizedBox(
-                width: 48,
-                height: 36,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Radial glow when active
-                    if (widget.isActive)
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                AppColors.primary.withValues(alpha: 0.10),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    Icon(
-                      widget.isActive ? widget.activeIcon : widget.icon,
-                      color: widget.isActive
-                          ? AppColors.primary
-                          : AppColors.textMuted,
-                      size: 22,
-                    ),
-                  ],
+        child: PressableScale(
+          onTap: onTap,
+          scale: 0.92,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(isActive ? activeIcon : icon, color: color, size: 22),
+              const SizedBox(height: AppSpace.xs),
+              Text(label, style: AppText.micro.copyWith(color: color)),
+              const SizedBox(height: AppSpace.xs),
+              AnimatedContainer(
+                duration: AppMotion.of(context, AppMotion.medium),
+                curve: AppMotion.standard,
+                width: 4,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isActive ? AppColors.accentStrong : Colors.transparent,
+                  shape: BoxShape.circle,
                 ),
               ),
-            ),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
-              style: TextStyle(
-                color:
-                    widget.isActive ? AppColors.primary : AppColors.textMuted,
-                fontSize: 11,
-                fontWeight:
-                    widget.isActive ? FontWeight.w700 : FontWeight.w400,
-                letterSpacing: 0.08,
-              ),
-              child: Text(widget.label),
-            ),
-            const SizedBox(height: 4),
-            // Dot indicator
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOutCubic,
-              width: widget.isActive ? 4 : 0,
-              height: widget.isActive ? 4 : 0,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
-                boxShadow: widget.isActive
-                    ? [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          blurRadius: 6,
-                        )
-                      ]
-                    : null,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -617,7 +455,7 @@ class _ProgressRingPainter extends CustomPainter {
       center,
       radius,
       Paint()
-        ..color = const Color(0xFF262626).withValues(alpha: 0.7)
+        ..color = AppColors.border
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth,
     );
@@ -633,7 +471,7 @@ class _ProgressRingPainter extends CustomPainter {
       sweepAngle,
       false,
       Paint()
-        ..color = AppColors.accent.withValues(alpha: 0.35)
+        ..color = AppColors.glow
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth + 6
         ..strokeCap = StrokeCap.round
@@ -651,12 +489,12 @@ class _ProgressRingPainter extends CustomPainter {
           startAngle: -math.pi / 2,
           endAngle: 3 * math.pi / 2,
           colors: [
-            Color(0xFFFF3D00),
-            Color(0xFFFF6B35),
-            Color(0xFFFAB437),
-            Color(0xFFFF3D00),
+            AppColors.textPrimary,
+            AppColors.accent,
+            AppColors.accentStrong,
+            AppColors.textPrimary,
           ],
-          stops: [0.0, 0.35, 0.7, 1.0],
+          stops: [0.0, 0.5, 0.95, 1.0],
         ).createShader(rect)
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth
@@ -680,34 +518,24 @@ class _ProgressRing extends StatelessWidget {
     final progress = total > 0 ? (taken / total).clamp(0.0, 1.0) : 0.0;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: progress),
-      duration: const Duration(milliseconds: 900),
-      curve: Curves.easeOutCubic,
+      duration: AppMotion.hero,
+      curve: AppMotion.standard,
       builder: (_, p, __) => SizedBox(
         width: 92,
         height: 92,
         child: CustomPaint(
-          painter: _ProgressRingPainter(progress: p, strokeWidth: 9),
+          painter: _ProgressRingPainter(progress: p, strokeWidth: 6),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   '$taken',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w600,
-                    height: 1,
-                  ),
+                  style: AppText.display.copyWith(color: AppColors.textPrimary),
                 ),
                 Text(
                   '/$total',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
-                  ),
+                  style: AppText.micro.copyWith(color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -755,7 +583,7 @@ class _SupplementsTab extends StatelessWidget {
             if (state is HomeLoadedState) ...[
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                  padding: const EdgeInsets.fromLTRB(AppSpace.screen, 0, AppSpace.screen, 0),
                   child: _buildProgressCard(state),
                 ),
               ),
@@ -768,7 +596,7 @@ class _SupplementsTab extends StatelessWidget {
                     child: repair == null
                         ? const SizedBox.shrink()
                         : Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                            padding: const EdgeInsets.fromLTRB(AppSpace.screen, 12, AppSpace.screen, 0),
                             child: StreakRepairCard(
                               repair: repair,
                               onGoToShop: onShopPressed,
@@ -781,7 +609,7 @@ class _SupplementsTab extends StatelessWidget {
               if (state.supplements.any((s) => s.isStockLow))
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(AppSpace.screen, 12, AppSpace.screen, 0),
                     child: _LowStockCard(
                       supplements:
                           state.supplements.where((s) => s.isStockLow).toList(),
@@ -814,7 +642,7 @@ class _SupplementsTab extends StatelessWidget {
               // Section header
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+                  padding: const EdgeInsets.fromLTRB(AppSpace.screen, 24, AppSpace.screen, 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -822,28 +650,18 @@ class _SupplementsTab extends StatelessWidget {
                     children: [
                       const Text(
                         'Tu stack',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.1,
-                        ),
+                        style: AppText.section,
                       ),
                       Text(
                         '${state.supplements.length} activos',
-                        style: const TextStyle(
-                          color: AppColors.textMuted,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.1,
-                        ),
+                        style: AppText.micro,
                       ),
                     ],
                   ),
                 ),
               ),
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.screen),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, i) {
@@ -890,16 +708,11 @@ class _SupplementsTab extends StatelessWidget {
               ),
               const SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(20, 12, 20, 0),
+                  padding: EdgeInsets.fromLTRB(AppSpace.screen, 12, AppSpace.screen, 0),
                   child: Text(
-                    '← Desliza para eliminar  ·  Toca para registrar toma',
+                    'Desliza para eliminar · Toca el círculo para registrar',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.04,
-                    ),
+                    style: AppText.micro,
                   ),
                 ),
               ),
@@ -924,7 +737,7 @@ class _SupplementsTab extends StatelessWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          padding: const EdgeInsets.fromLTRB(AppSpace.screen, 16, AppSpace.screen, 20),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -932,24 +745,11 @@ class _SupplementsTab extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      greeting.toUpperCase(),
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.16,
-                      ),
-                    ),
+                    Text(greeting, style: AppText.caption),
                     const SizedBox(height: 2),
                     Text(
-                      '$username,',
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.2,
-                      ),
+                      username,
+                      style: AppText.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -981,84 +781,37 @@ class _SupplementsTab extends StatelessWidget {
     final allDone = totalSlots > 0 && takenSlots >= totalSlots;
     final progress = totalSlots > 0 ? takenSlots / totalSlots : 0.0;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.bgCardElevated.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
+    return GlassCard(
+      padding: const EdgeInsets.all(AppSpace.xl),
+      child: Row(
         children: [
-          // Glow accent top-right
-          Positioned(
-            top: -40,
-            right: -40,
-            child: Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.accent.withValues(alpha: 0.22),
-                    Colors.transparent,
-                  ],
+          _ProgressRing(taken: takenSlots, total: totalSlots),
+          const SizedBox(width: AppSpace.xl),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Hoy', style: AppText.brandSubtitle),
+                const SizedBox(height: AppSpace.xs),
+                Text(
+                  allDone
+                      ? 'Stack al 100 %'
+                      : '$takenSlots de $totalSlots tomas',
+                  style: AppText.title,
                 ),
-              ),
+                const SizedBox(height: AppSpace.xs),
+                Text(
+                  allDone
+                      ? 'Todo tomado. Vuelve mañana.'
+                      : progress > 0.5
+                          ? 'Casi lo tienes. No bajes el ritmo.'
+                          : progress > 0
+                              ? 'Buen comienzo. Sigue así.'
+                              : 'Empieza tu primera toma del día.',
+                  style: AppText.body,
+                ),
+              ],
             ),
-          ),
-          Row(
-            children: [
-              _ProgressRing(taken: takenSlots, total: totalSlots),
-              const SizedBox(width: 18),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'HOY',
-                      style: TextStyle(
-                        color: AppColors.neonOrange,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.14,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      allDone
-                          ? '¡Stack al 100%!'
-                          : '$takenSlots de $totalSlots tomas',
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.2,
-                        height: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      allDone
-                          ? 'Eres una máquina. Vuelve mañana.'
-                          : progress > 0.5
-                              ? 'Casi lo tienes. No bajes el ritmo.'
-                              : progress > 0
-                                  ? 'Buen comienzo. Sigue así.'
-                                  : 'Empieza tu primera toma del día.',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ),
         ],
       ),
@@ -1075,14 +828,14 @@ class _HomeSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppSkeletonGroup(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.screen),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Tarjeta de progreso
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: AppDecorations.frame(color: AppColors.bgCardElevated.withValues(alpha: 0.7)),
+              decoration: AppDecorations.frame(),
               child: const Row(
                 children: [
                   AppSkeleton.circle(size: 92),
@@ -1327,21 +1080,22 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
   Widget _buildStockSection() {
     final isPro = context.watch<ProCubit>().state.isPro;
     if (!isPro) {
-      return GestureDetector(
+      return PressableScale(
         onTap: () => openProPage(context),
+        scale: 0.98,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpace.lg, vertical: AppSpace.md),
           decoration: BoxDecoration(
-            color: AppColors.bgCardElevated,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
+            color: AppColors.surfaceRaised,
+            borderRadius: BorderRadius.circular(AppRadii.tile),
           ),
           child: const Row(children: [
             Icon(LucideIcons.package, color: AppColors.textMuted, size: 20),
             SizedBox(width: 12),
             Expanded(
               child: Text('Te avisamos antes de que se te acabe',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                  style: AppText.body),
             ),
             Icon(LucideIcons.lock, color: AppColors.textMuted, size: 16),
           ]),
@@ -1353,20 +1107,19 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          value: _stockEnabled,
-          activeThumbColor: AppColors.accent,
-          title: const Text('Controlar lo que me queda',
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 14)),
-          onChanged: (v) => setState(() => _stockEnabled = v),
+        OptionTile(
+          label: 'Controlar lo que me queda',
+          selected: _stockEnabled,
+          multi: true,
+          onTap: () => setState(() => _stockEnabled = !_stockEnabled),
         ),
         if (_stockEnabled) ...[
+          const SizedBox(height: AppSpace.md),
           Row(children: [
             Expanded(
               child: TextFormField(
                 controller: _stockCtrl,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: AppText.input,
                 decoration: const InputDecoration(labelText: 'Me quedan (unidades)'),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: (v) => _stockEnabled && _parse(v ?? '') == null ? 'Requerido' : null,
@@ -1376,7 +1129,7 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
             Expanded(
               child: TextFormField(
                 controller: _unitsPerIntakeCtrl,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: AppText.input,
                 decoration: const InputDecoration(labelText: 'Gasto por toma'),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: (v) => (_parse(v ?? '') ?? 0) <= 0 ? 'Inválido' : null,
@@ -1385,13 +1138,20 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
           ]),
           if (days != null) ...[
             const SizedBox(height: 8),
-            Text(
-              '📦 Te dura unos $days días',
-              style: TextStyle(
-                color: days <= 7 ? AppColors.warning : AppColors.textSecondary,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
+            Row(
+              children: [
+                Icon(LucideIcons.package,
+                    size: 14,
+                    color: days <= 7 ? AppColors.warning : AppColors.textSecondary),
+                const SizedBox(width: AppSpace.sm),
+                Text(
+                  'Te dura unos $days días',
+                  style: AppText.label.copyWith(
+                      color: days <= 7
+                          ? AppColors.warning
+                          : AppColors.textSecondary),
+                ),
+              ],
             ),
           ],
         ],
@@ -1424,23 +1184,18 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
                   margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
                     color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(AppRadii.chip),
                   ),
                 ),
               ),
               Text(
                 widget.supplement.name,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.3,
-                ),
+                style: AppText.question,
               ),
               const SizedBox(height: 4),
               const Text(
                 'Editar configuración',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                style: AppText.body,
               ),
               const SizedBox(height: 24),
 
@@ -1466,7 +1221,7 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
                   flex: 2,
                   child: TextFormField(
                     controller: _amountCtrl,
-                    style: const TextStyle(color: AppColors.textPrimary),
+                    style: AppText.input,
                     decoration: const InputDecoration(labelText: 'Cantidad'),
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
@@ -1484,8 +1239,8 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
                   flex: 3,
                   child: DropdownButtonFormField<String>(
                     initialValue: _dosageUnit,
-                    dropdownColor: AppColors.bgCardElevated,
-                    style: const TextStyle(color: AppColors.textPrimary),
+                    dropdownColor: AppColors.surfaceRaised,
+                    style: AppText.input,
                     decoration: const InputDecoration(labelText: 'Unidad'),
                     items: _dosageUnits
                         .map((u) =>
@@ -1535,20 +1290,26 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
 
               const _SectionLabel('Recordatorio'),
               const SizedBox(height: 8),
-              GestureDetector(
+              PressableScale(
                 onTap: _pickNotificationTime,
-                child: Container(
+                scale: 0.98,
+                child: AnimatedContainer(
+                  duration: AppMotion.of(context, AppMotion.medium),
+                  curve: AppMotion.standard,
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
+                      horizontal: AppSpace.lg, vertical: AppSpace.sm),
+                  constraints:
+                      const BoxConstraints(minHeight: 48),
                   decoration: BoxDecoration(
                     color: _notificationTime != null
-                        ? AppColors.primary.withValues(alpha: 0.08)
-                        : AppColors.bgCardElevated,
-                    borderRadius: BorderRadius.circular(12),
+                        ? AppColors.surfaceSelected
+                        : AppColors.surfaceRaised,
+                    borderRadius: BorderRadius.circular(AppRadii.tile),
                     border: Border.all(
                       color: _notificationTime != null
-                          ? AppColors.primary.withValues(alpha: 0.45)
-                          : AppColors.border,
+                          ? AppColors.ring
+                          : Colors.transparent,
+                      width: 1.2,
                     ),
                   ),
                   child: Row(children: [
@@ -1557,9 +1318,9 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
                           ? LucideIcons.bellRing
                           : LucideIcons.bell,
                       color: _notificationTime != null
-                          ? AppColors.primary
+                          ? AppColors.accent
                           : AppColors.textMuted,
-                      size: 20,
+                      size: 18,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1567,12 +1328,9 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
                         _notificationTime != null
                             ? 'Recordatorio a las ${_notificationTime!.format(context)}'
                             : 'Sin recordatorio (toca para configurar)',
-                        style: TextStyle(
-                          color: _notificationTime != null
+                        style: AppText.body.copyWith(color: _notificationTime != null
                               ? AppColors.textPrimary
-                              : AppColors.textSecondary,
-                          fontSize: 14,
-                        ),
+                              : AppColors.textSecondary),
                       ),
                     ),
                     if (_notificationTime != null)
@@ -1633,34 +1391,30 @@ class _LowStockCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
-        color: AppColors.warning.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('📦', style: TextStyle(fontSize: 24)),
-          const SizedBox(width: 12),
+          const IconChip(icon: LucideIcons.package, color: AppColors.warning),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Toca reponer',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppText.navTitle,
                 ),
                 const SizedBox(height: 4),
                 for (final s in supplements)
                   Text(
                     _line(s),
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4),
+                    style: AppText.body,
                   ),
               ],
             ),
@@ -1676,9 +1430,5 @@ class _SectionLabel extends StatelessWidget {
   const _SectionLabel(this.text);
   @override
   Widget build(BuildContext context) => Text(text,
-      style: const TextStyle(
-          color: AppColors.textSecondary,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.8));
+      style: AppText.captionStrong.copyWith(color: AppColors.textSecondary));
 }
