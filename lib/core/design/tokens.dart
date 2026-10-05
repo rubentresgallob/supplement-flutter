@@ -37,7 +37,7 @@ class AppColors {
   // Texto (muted ≥ 4.5:1 sobre negro; tertiary solo para pistas decorativas)
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFF8B8B95);
-  static const Color textMuted = Color(0xFF7C7C86);
+  static const Color textMuted = Color(0xFF82828C);
   static const Color textTertiary = Color(0xFF4A4A52);
 
   // Superficies translúcidas
