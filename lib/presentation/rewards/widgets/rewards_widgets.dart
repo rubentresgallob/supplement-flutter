@@ -17,28 +17,17 @@ Color rarityColor(String rarity) => switch (rarity) {
     };
 
 /// Icono de cada objeto de la tienda (el backend manda un emoji; aquí se
-/// traduce por `code` al set de iconos de la app).
-IconData shopItemIcon(ShopItem item) => switch (item.code) {
-      'medal_capsule' => LucideIcons.pill,
-      'medal_streak_30' => LucideIcons.flame,
-      'medal_streak_100' => LucideIcons.award,
-      'medal_streak_365' => LucideIcons.crown,
-      'medal_pro_diamond' => LucideIcons.gem,
-      'banner_sunrise' => LucideIcons.sunrise,
-      'banner_ocean' => LucideIcons.waves,
-      'banner_forest' => LucideIcons.treePine,
-      'banner_galaxy' => LucideIcons.orbit,
-      'banner_aurora' => LucideIcons.sparkles,
-      _ => switch (item.category) {
-          'medal' => LucideIcons.star,
-          'banner' => LucideIcons.image,
-          'consumable' => LucideIcons.shield,
-          'capsu' => LucideIcons.sparkles,
-          _ => LucideIcons.gift,
-        },
+/// traduce al set de iconos de la app). Las medallas, banners y protectores
+/// no lo usan: se dibujan enteros en `reward_art.dart`.
+IconData shopItemIcon(ShopItem item) => switch (item.category) {
+      'medal' => LucideIcons.star,
+      'banner' => LucideIcons.image,
+      'consumable' => LucideIcons.shield,
+      'capsu' => LucideIcons.sparkles,
+      _ => LucideIcons.gift,
     };
 
-/// Icono de cada logro.
+/// Icono de los logros que no son de racha (los de racha llevan su número).
 IconData achievementIcon(String code) => switch (code) {
       'first_intake' => LucideIcons.pill,
       'first_day' => LucideIcons.calendarCheck,
@@ -46,53 +35,160 @@ IconData achievementIcon(String code) => switch (code) {
       'first_friend' => LucideIcons.handshake,
       'friends_5' => LucideIcons.usersRound,
       'first_item' => LucideIcons.shoppingBag,
-      'streak_100' => LucideIcons.award,
-      'streak_365' => LucideIcons.crown,
-      _ => code.startsWith('streak_') ? LucideIcons.flame : LucideIcons.trophy,
+      _ => LucideIcons.trophy,
     };
 
-/// Metal de cada medalla de la tienda.
-RewardMetal medalMetal(ShopItem item) => switch (item.code) {
-      'medal_bronze' => RewardMetal.bronze,
-      'medal_silver' => RewardMetal.silver,
-      'medal_gold' => RewardMetal.gold,
-      'medal_capsule' => RewardMetal.lavender,
-      'medal_streak_30' => RewardMetal.rose,
-      'medal_streak_100' => RewardMetal.mint,
-      'medal_streak_365' || 'medal_pro_diamond' => RewardMetal.prism,
-      _ => switch (item.rarity) {
+/// Dibujo de cada medalla de la tienda: metal, silueta y grabado.
+MedalArt shopMedalArt(
+  ShopItem item, {
+  double size = 64,
+  bool ribbon = true,
+  bool glow = true,
+}) {
+  final (metal, shape, label) = switch (item.code) {
+    'medal_bronze' => (RewardMetal.bronze, MedalShape.round, null),
+    'medal_silver' => (RewardMetal.silver, MedalShape.rosette, null),
+    'medal_gold' => (RewardMetal.gold, MedalShape.sunburst, null),
+    'medal_capsule' => (RewardMetal.gold, MedalShape.capsule, null),
+    'medal_streak_30' => (RewardMetal.rose, MedalShape.flame, '30'),
+    'medal_streak_100' => (RewardMetal.mint, MedalShape.hexagon, '100'),
+    'medal_streak_365' => (RewardMetal.gold, MedalShape.crown, null),
+    'medal_pro_diamond' => (RewardMetal.prism, MedalShape.gem, null),
+    _ => (
+        switch (item.rarity) {
           'rare' => RewardMetal.silver,
           'epic' => RewardMetal.lavender,
           'legendary' => RewardMetal.prism,
           _ => RewardMetal.bronze,
         },
+        MedalShape.round,
+        null,
+      ),
+  };
+  return MedalArt(
+    metal: metal,
+    shape: shape,
+    label: label,
+    star: label == null,
+    size: size,
+    ribbon: ribbon,
+    glow: glow,
+  );
+}
+
+/// Dibujo de cada logro: los de racha suben de metal y de forma con los días.
+MedalArt achievementArt(Achievement a, {double size = 48}) {
+  if (!a.unlocked) {
+    return MedalArt(
+      metal: RewardMetal.locked,
+      icon: LucideIcons.lock,
+      size: size,
+      ribbon: false,
+      glow: false,
+    );
+  }
+  final days = a.code.startsWith('streak_')
+      ? int.tryParse(a.code.substring('streak_'.length))
+      : null;
+  final (metal, shape) = switch (days) {
+    null => (
+        a.code == 'friends_5' ? RewardMetal.silver : RewardMetal.lavender,
+        MedalShape.round,
+      ),
+    < 14 => (RewardMetal.bronze, MedalShape.round),
+    < 30 => (RewardMetal.silver, MedalShape.rosette),
+    < 100 => (RewardMetal.gold, MedalShape.sunburst),
+    < 365 => (RewardMetal.mint, MedalShape.hexagon),
+    _ => (RewardMetal.prism, MedalShape.sunburst),
+  };
+  return MedalArt(
+    metal: metal,
+    shape: shape,
+    label: days?.toString(),
+    icon: days == null ? achievementIcon(a.code) : null,
+    size: size,
+    ribbon: false,
+  );
+}
+
+/// Paisaje de cada banner.
+BannerScene bannerScene(ShopItem item) => switch (item.code) {
+      'banner_sunrise' => BannerScene.sunrise,
+      'banner_ocean' => BannerScene.ocean,
+      'banner_forest' => BannerScene.forest,
+      'banner_galaxy' => BannerScene.galaxy,
+      'banner_aurora' => BannerScene.aurora,
+      _ => BannerScene.plain,
     };
 
-/// Metal de cada logro: sube con la dificultad.
-RewardMetal achievementMetal(String code) => switch (code) {
-      'streak_3' || 'streak_7' => RewardMetal.bronze,
-      'streak_14' => RewardMetal.silver,
-      'streak_30' || 'streak_60' => RewardMetal.gold,
-      'streak_100' => RewardMetal.mint,
-      'streak_365' => RewardMetal.prism,
-      'friends_5' => RewardMetal.silver,
-      _ => RewardMetal.lavender,
-    };
-
-/// Medalla equipada (perfil, probador, ranking): el disco sin cinta.
+/// Medalla equipada (perfil, probador, ranking): la pieza sin cinta.
 class MedalIcon extends StatelessWidget {
   final ShopItem medal;
   final double size;
   const MedalIcon({super.key, required this.medal, this.size = 28});
 
   @override
-  Widget build(BuildContext context) => MedalArt(
-        metal: medalMetal(medal),
-        icon: shopItemIcon(medal),
-        size: size,
-        ribbon: false,
-        glow: false,
+  Widget build(BuildContext context) => ShopRender(
+        code: medal.code,
+        width: size,
+        height: size,
+        fallback: shopMedalArt(medal, size: size, ribbon: false, glow: false),
       );
+}
+
+/// Render 3D de un objeto de la tienda (`assets/shop/<code>.png`, o `.jpg` los banners; hechos con
+/// Blender: ver `tool/shop_art/render_shop.py`). Si un objeto aún no tiene
+/// render, se usa el dibujo hecho en código.
+class ShopRender extends StatelessWidget {
+  final String code;
+  final double width;
+  final double height;
+  final Widget fallback;
+  final BoxFit fit;
+
+  const ShopRender({
+    super.key,
+    required this.code,
+    required this.width,
+    required this.height,
+    required this.fallback,
+    this.fit = BoxFit.contain,
+  });
+
+  static const rendered = {
+    'streak_freeze',
+    'medal_bronze',
+    'medal_silver',
+    'medal_gold',
+    'medal_capsule',
+    'medal_streak_30',
+    'medal_streak_100',
+    'medal_streak_365',
+    'medal_pro_diamond',
+    'banner_sunrise',
+    'banner_ocean',
+    'banner_forest',
+    'banner_galaxy',
+    'banner_aurora',
+  };
+
+  /// Ruta del render de [code] (los banners no llevan transparencia: JPG).
+  static String assetOf(String code) =>
+      'assets/shop/$code.${code.startsWith('banner_') ? 'jpg' : 'png'}';
+
+  @override
+  Widget build(BuildContext context) {
+    if (!rendered.contains(code)) return fallback;
+    return Image.asset(
+      assetOf(code),
+      width: width,
+      height: height,
+      fit: fit,
+      filterQuality: FilterQuality.medium,
+      excludeFromSemantics: true,
+      errorBuilder: (_, __, ___) => fallback,
+    );
+  }
 }
 
 String rarityLabel(String rarity) => switch (rarity) {
@@ -161,22 +257,45 @@ class ShopItemPreview extends StatelessWidget {
       );
     }
     if (item.category == 'banner' && item.colors.length >= 2) {
-      return BannerArt(
+      final art = BannerArt(
         colors: item.colors,
-        icon: shopItemIcon(item),
+        scene: bannerScene(item),
         width: size * 1.5,
         height: size * 0.82,
       );
+      if (!ShopRender.rendered.contains(item.code)) return art;
+      return Container(
+        foregroundDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadii.button),
+          border: Border.all(color: AppColors.borderStrong),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadii.button),
+          child: ShopRender(
+            code: item.code,
+            width: size * 1.5,
+            height: size * 0.82,
+            fit: BoxFit.cover,
+            fallback: art,
+          ),
+        ),
+      );
     }
     if (item.category == 'medal') {
-      return MedalArt(
-        metal: medalMetal(item),
-        icon: shopItemIcon(item),
-        size: size,
+      return ShopRender(
+        code: item.code,
+        width: size * 1.1,
+        height: size * 1.1,
+        fallback: shopMedalArt(item, size: size),
       );
     }
     if (item.category == 'consumable') {
-      return ShieldArt(size: size * 0.95, icon: LucideIcons.flame);
+      return ShopRender(
+        code: item.code,
+        width: size,
+        height: size,
+        fallback: ShieldArt(size: size * 0.95),
+      );
     }
     return IconChip(
       icon: shopItemIcon(item),
