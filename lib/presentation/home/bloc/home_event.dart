@@ -35,6 +35,9 @@ class HomeMarkAllIntakesTakenEvent extends HomeEvent {
   List<Object> get props => [supplementId, remaining];
 }
 
+/// Evento para registrar de golpe todo lo que falta hoy, de todos los suplementos
+class HomeMarkEverythingTakenEvent extends HomeEvent {}
+
 /// Evento para eliminar un suplemento de la rutina
 class HomeDeleteSupplementEvent extends HomeEvent {
   final String supplementId;

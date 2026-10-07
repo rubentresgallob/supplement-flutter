@@ -17,6 +17,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<HomeRefreshEvent>(_onRefresh);
     on<HomeMarkIntakeTakenEvent>(_onMarkIntakeTaken);
     on<HomeMarkAllIntakesTakenEvent>(_onMarkAllIntakesTaken);
+    on<HomeMarkEverythingTakenEvent>(_onMarkEverythingTaken);
     on<HomeDeleteSupplementEvent>(_onDeleteSupplement);
   }
 
@@ -83,30 +84,55 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     add(HomeLoadSupplementsEvent());
   }
 
-  Future<void> _onMarkIntakeTaken(
-    HomeMarkIntakeTakenEvent event,
-    Emitter<HomeState> emit,
-  ) async {
-    try {
-      await _intakesDataSource.createIntake(userSupplementId: event.supplementId);
-      add(HomeLoadSupplementsEvent());
-    } catch (e) {
-      emit(HomeErrorState(e.toString()));
-    }
-  }
+  /// Suplementos con un registro en curso: evita tomas duplicadas si se pulsa
+  /// dos veces antes de que la lista se recargue.
+  final _registering = <String>{};
 
-  Future<void> _onMarkAllIntakesTaken(
-    HomeMarkAllIntakesTakenEvent event,
-    Emitter<HomeState> emit,
-  ) async {
+  /// Registra [count] tomas de cada suplemento de [intakes] y recarga.
+  Future<void> _register(Map<String, int> intakes, Emitter<HomeState> emit) async {
+    final pending = {
+      for (final e in intakes.entries)
+        if (e.value > 0 && !_registering.contains(e.key)) e.key: e.value,
+    };
+    if (pending.isEmpty) return;
+    _registering.addAll(pending.keys);
     try {
-      for (int i = 0; i < event.remaining; i++) {
-        await _intakesDataSource.createIntake(userSupplementId: event.supplementId);
+      for (final e in pending.entries) {
+        for (var i = 0; i < e.value; i++) {
+          await _intakesDataSource.createIntake(userSupplementId: e.key);
+        }
       }
       add(HomeLoadSupplementsEvent());
     } catch (e) {
       emit(HomeErrorState(e.toString()));
+    } finally {
+      _registering.removeAll(pending.keys);
     }
+  }
+
+  Future<void> _onMarkIntakeTaken(
+    HomeMarkIntakeTakenEvent event,
+    Emitter<HomeState> emit,
+  ) =>
+      _register({event.supplementId: 1}, emit);
+
+  Future<void> _onMarkAllIntakesTaken(
+    HomeMarkAllIntakesTakenEvent event,
+    Emitter<HomeState> emit,
+  ) =>
+      _register({event.supplementId: event.remaining}, emit);
+
+  /// Todo lo que falta hoy, de todos los suplementos.
+  Future<void> _onMarkEverythingTaken(
+    HomeMarkEverythingTakenEvent event,
+    Emitter<HomeState> emit,
+  ) async {
+    final current = state;
+    if (current is! HomeLoadedState) return;
+    await _register({
+      for (final s in current.supplements)
+        s.id: s.timesPerDay - (current.progress[s.id] ?? 0),
+    }, emit);
   }
 
   Future<void> _onDeleteSupplement(

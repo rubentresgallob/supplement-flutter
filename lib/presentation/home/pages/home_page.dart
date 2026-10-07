@@ -39,7 +39,11 @@ class _HomePageState extends State<HomePage> {
   int _currentTab = 0;
 
   bool _showCelebration = false;
-  bool _prevAllComplete = false;
+
+  /// Si el día estaba completo la última vez que se cargó la lista. `null`
+  /// hasta la primera carga: así, al abrir la app con el día ya completo no
+  /// se vuelve a celebrar; solo en el momento en que se completa.
+  bool? _wasComplete;
   StreamSubscription<RewardsCelebration>? _rewardsSub;
 
   static const _shopTab = 2;
@@ -94,12 +98,12 @@ class _HomePageState extends State<HomePage> {
           final allComplete = state.supplements.isNotEmpty &&
               state.supplements
                   .every((s) => (state.progress[s.id] ?? 0) >= s.timesPerDay);
-          if (allComplete && !_prevAllComplete) {
+          if (allComplete && _wasComplete == false) {
             _triggerCelebration();
           }
-          _prevAllComplete = allComplete;
-        } else if (state is HomeLoadingState || state is HomeEmptyState) {
-          _prevAllComplete = false;
+          _wasComplete = allComplete;
+        } else if (state is HomeEmptyState) {
+          _wasComplete = false;
         }
       },
       child: Stack(
@@ -584,7 +588,7 @@ class _SupplementsTab extends StatelessWidget {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(AppSpace.screen, 0, AppSpace.screen, 0),
-                  child: _buildProgressCard(state),
+                  child: _buildProgressCard(context, state),
                 ),
               ),
               // Racha rota pero recuperable con protectores
@@ -710,7 +714,7 @@ class _SupplementsTab extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(AppSpace.screen, 12, AppSpace.screen, 0),
                   child: Text(
-                    'Desliza para eliminar · Toca el círculo para registrar',
+                    'Desliza una tarjeta hacia la izquierda para eliminarla',
                     textAlign: TextAlign.center,
                     style: AppText.micro,
                   ),
@@ -773,7 +777,7 @@ class _SupplementsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressCard(HomeLoadedState state) {
+  Widget _buildProgressCard(BuildContext context, HomeLoadedState state) {
     final takenSlots = state.supplements.fold<int>(
         0, (sum, s) => sum + (state.progress[s.id] ?? 0).clamp(0, s.timesPerDay));
     final totalSlots =
@@ -783,7 +787,29 @@ class _SupplementsTab extends StatelessWidget {
 
     return GlassCard(
       padding: const EdgeInsets.all(AppSpace.xl),
-      child: Row(
+      child: Column(
+        children: [
+          _buildProgressSummary(takenSlots, totalSlots, allDone, progress),
+          if (!allDone) ...[
+            const SizedBox(height: AppSpace.lg),
+            // Un toque y queda registrado todo lo que falta hoy
+            AppButton(
+              label: 'Registrar todo',
+              icon: LucideIcons.checkCheck,
+              expand: true,
+              onPressed: () => context
+                  .read<HomeBloc>()
+                  .add(HomeMarkEverythingTakenEvent()),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressSummary(
+      int takenSlots, int totalSlots, bool allDone, double progress) {
+    return Row(
         children: [
           _ProgressRing(taken: takenSlots, total: totalSlots),
           const SizedBox(width: AppSpace.xl),
@@ -814,7 +840,6 @@ class _SupplementsTab extends StatelessWidget {
             ),
           ),
         ],
-      ),
     );
   }
 }

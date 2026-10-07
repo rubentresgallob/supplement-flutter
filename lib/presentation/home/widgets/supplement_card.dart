@@ -87,50 +87,69 @@ class _SupplementCardState extends State<SupplementCard> {
         children: [
           Padding(
             padding: const EdgeInsets.all(AppSpace.lg),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                IconChip(icon: _icon(s.form), size: 44, highlighted: isComplete),
-                const SizedBox(width: AppSpace.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        // deja sitio al botón de editar
-                        padding: const EdgeInsets.only(right: AppSpace.sm),
-                        child: Text(
-                          s.name,
-                          style: AppText.section,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    IconChip(icon: _icon(s.form), size: 44, highlighted: isComplete),
+                    const SizedBox(width: AppSpace.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            // deja sitio al botón de editar
+                            padding: const EdgeInsets.only(right: AppSpace.xl),
+                            child: Text(
+                              s.name,
+                              style: AppText.section,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '$dose ${s.dosageUnit} · ${s.form} · $total× al día',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.caption,
+                          ),
+                          if (s.stockDaysLeft != null) ...[
+                            const SizedBox(height: AppSpace.xs),
+                            _buildStockLabel(s.stockDaysLeft!),
+                          ],
+                        ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '$dose ${s.dosageUnit} · ${s.form} · $total× al día',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppText.caption,
-                      ),
-                      if (s.stockDaysLeft != null) ...[
-                        const SizedBox(height: AppSpace.xs),
-                        _buildStockLabel(s.stockDaysLeft!),
-                      ],
-                      if (s.schedules.isNotEmpty) ...[
-                        const SizedBox(height: AppSpace.sm),
-                        _buildScheduleChips(),
-                      ],
-                      const SizedBox(height: AppSpace.md),
-                      FlowProgress(
+                    ),
+                  ],
+                ),
+                if (s.schedules.isNotEmpty) ...[
+                  const SizedBox(height: AppSpace.md),
+                  _buildScheduleChips(),
+                ],
+                const SizedBox(height: AppSpace.md),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FlowProgress(
                         value: total > 0 ? widget.taken / total : 0,
                         height: 3,
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: AppSpace.md),
+                    Text(
+                      '${widget.taken.clamp(0, total)} de $total',
+                      style: AppText.captionStrong.copyWith(
+                          color: isComplete
+                              ? AppColors.mint
+                              : AppColors.textSecondary),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: AppSpace.md),
-                _buildCheckButton(isComplete, total),
+                const SizedBox(height: AppSpace.md),
+                _buildActions(isComplete, total),
               ],
             ),
           ),
@@ -192,48 +211,48 @@ class _SupplementCardState extends State<SupplementCard> {
     );
   }
 
-  Widget _buildCheckButton(bool isComplete, int total) {
-    final started = widget.taken > 0;
-    return Semantics(
-      button: true,
-      label: isComplete
-          ? '${widget.supplement.name} completado'
-          : 'Registrar toma de ${widget.supplement.name}, ${widget.taken} de $total',
-      excludeSemantics: true,
-      child: PressableScale(
-        onTap: widget.onMarkTaken,
-        scale: 0.92,
-        child: AnimatedContainer(
-          duration: AppMotion.of(context, AppMotion.medium),
-          curve: AppMotion.standard,
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isComplete ? AppColors.mint : Colors.transparent,
-            border: Border.all(
-              color: isComplete
-                  ? AppColors.mint
-                  : started
-                      ? AppColors.accentStrong
-                      : AppColors.textTertiary,
-              width: 1.5,
-            ),
-          ),
-          child: Center(
-            child: isComplete
-                ? const Icon(LucideIcons.check,
-                    color: AppColors.background, size: 20)
-                : Text(
-                    '${widget.taken}/$total',
-                    style: AppText.captionStrong.copyWith(
-                        color: started
-                            ? AppColors.textPrimary
-                            : AppColors.textMuted),
-                  ),
+  /// Acciones claras en vez de un círculo: una toma, o todas las que faltan.
+  Widget _buildActions(bool isComplete, int total) {
+    if (isComplete) {
+      return const Row(
+        children: [
+          Icon(LucideIcons.circleCheck, size: 16, color: AppColors.mint),
+          SizedBox(width: AppSpace.sm),
+          Text('Completado por hoy', style: AppText.label),
+        ],
+      );
+    }
+    final remaining = total - widget.taken;
+    return Row(
+      children: [
+        Expanded(
+          child: AppButton(
+            // Con dos botones no cabe el texto largo en pantallas estrechas
+            label: remaining > 1 ? 'Una toma' : 'Registrar toma',
+            icon: remaining > 1 ? null : LucideIcons.plus,
+            size: AppButtonSize.sm,
+            variant: AppButtonVariant.secondary,
+            expand: true,
+            semanticLabel:
+                'Registrar una toma de ${widget.supplement.name}, llevas ${widget.taken} de $total',
+            onPressed: widget.onMarkTaken,
           ),
         ),
-      ),
+        if (remaining > 1) ...[
+          const SizedBox(width: AppSpace.sm),
+          Expanded(
+            child: AppButton(
+              label: 'Todas ($remaining)',
+              size: AppButtonSize.sm,
+              variant: AppButtonVariant.outline,
+              expand: true,
+              semanticLabel:
+                  'Registrar las $remaining tomas que faltan de ${widget.supplement.name}',
+              onPressed: widget.onMarkAllTaken,
+            ),
+          ),
+        ],
+      ],
     );
   }
 
