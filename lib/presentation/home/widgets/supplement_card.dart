@@ -46,8 +46,8 @@ class _SupplementCardState extends State<SupplementCard> {
       confirmDismiss: (_) => showAppConfirm(
         context,
         title: '¿Eliminar ${widget.supplement.name}?',
-        body: 'Se borrará de tu stack junto con su historial de tomas '
-            'y su recordatorio. No se puede deshacer.',
+        body: 'Se quitará de tu stack y se cancelará su recordatorio. '
+            'Lo que ya tomaste seguirá en tu calendario.',
         confirmLabel: 'Eliminar',
         destructive: true,
       ),

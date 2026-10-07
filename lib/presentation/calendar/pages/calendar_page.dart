@@ -452,10 +452,18 @@ class _DayDetail extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSpace.md),
                   Expanded(
-                    child: Text(s.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppText.label),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(s.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.label),
+                        if (s.retired)
+                          const Text('Ya no está en tu rutina',
+                              style: AppText.micro),
+                      ],
+                    ),
                   ),
                   Text('${s.taken} de ${s.expected}',
                       style: AppText.captionStrong

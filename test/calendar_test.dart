@@ -36,7 +36,7 @@ Map<String, dynamic> monthJson(int year, int month, {required DateTime today}) {
           ? []
           : [
               {'id': 1, 'name': 'Creatina', 'taken': creatina, 'expected': 1},
-              {'id': 2, 'name': 'Omega 3', 'taken': omega, 'expected': 2},
+              {'id': 2, 'name': 'Omega 3', 'taken': omega, 'expected': 2, 'retired': true},
             ],
     });
   }
@@ -122,6 +122,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Te faltó Omega 3'), findsOneWidget);
     expect(find.text('1 de 2'), findsOneWidget);
+    // Un suplemento que se quitó sigue en el historial, marcado como tal
+    expect(find.text('Ya no está en tu rutina'), findsOneWidget);
 
     await tester.tap(find.text('2'));
     await tester.pump(const Duration(milliseconds: 300));

@@ -31,11 +31,15 @@ class CalendarSupplementDay extends Equatable {
   final int taken;
   final int expected;
 
+  /// El usuario ya lo quitó de su rutina; se conserva en el historial.
+  final bool retired;
+
   const CalendarSupplementDay({
     required this.id,
     required this.name,
     required this.taken,
     required this.expected,
+    this.retired = false,
   });
 
   bool get complete => taken >= expected;
@@ -46,10 +50,11 @@ class CalendarSupplementDay extends Equatable {
         name: json['name'] as String? ?? 'Suplemento',
         taken: json['taken'] as int? ?? 0,
         expected: json['expected'] as int? ?? 0,
+        retired: json['retired'] as bool? ?? false,
       );
 
   @override
-  List<Object?> get props => [id, name, taken, expected];
+  List<Object?> get props => [id, name, taken, expected, retired];
 }
 
 class CalendarDay extends Equatable {
