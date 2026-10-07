@@ -7,8 +7,16 @@ import '../../../data/models/calendar_models.dart';
 
 /// Calendario de progreso: qué días se completó todo, cuáles a medias y
 /// cuáles se quedaron sin tomar, con el detalle de cada día.
+/// De dónde sale cada mes (por defecto, el calendario del propio usuario).
+typedef CalendarLoader = Future<CalendarMonth> Function(int year, int month);
+
 class CalendarPage extends StatefulWidget {
-  const CalendarPage({super.key});
+  final String title;
+
+  /// Para ver el calendario de otra persona (un amigo).
+  final CalendarLoader? loader;
+
+  const CalendarPage({super.key, this.title = 'Calendario', this.loader});
 
   static Future<void> open(BuildContext context) => Navigator.of(context)
       .push(MaterialPageRoute(builder: (_) => const CalendarPage()));
@@ -46,9 +54,9 @@ class _CalendarPageState extends State<CalendarPage> {
       _error = null;
     });
     try {
-      final data = await context
-          .read<IntakesRemoteDataSource>()
-          .getCalendar(month.year, month.month);
+      final load = widget.loader ??
+          context.read<IntakesRemoteDataSource>().getCalendar;
+      final data = await load(month.year, month.month);
       if (!mounted || month != _month) return; // llegó tarde: ya se cambió de mes
       setState(() {
         _data = data;
@@ -92,7 +100,7 @@ class _CalendarPageState extends State<CalendarPage> {
     final data = _data;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Calendario'),
+        title: Text(widget.title),
         leading: IconButton(
           tooltip: 'Volver',
           icon: const Icon(LucideIcons.chevronLeft),

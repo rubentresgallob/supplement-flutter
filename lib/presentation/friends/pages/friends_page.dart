@@ -1,3 +1,4 @@
+import 'friend_profile_page.dart';
 import '../../rewards/widgets/rewards_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -207,23 +208,16 @@ class _FriendsTabState extends State<_FriendsTab> {
   Future<void> _showFriendDetail(Map<String, dynamic> friendItem) async {
     final friend = friendItem['friend'] as Map<String, dynamic>;
     final username = friend['username'] as String;
-    final email = friend['email'] as String;
     final friendId = friend['id'] as int;
 
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.bgCard,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => _FriendDetailSheet(
-        username: username,
-        email: email,
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => FriendProfilePage(
         friendId: friendId,
+        username: username,
         onMotivate: () => _motivateFriend(username, friendId),
         onRemove: () => _remove(friendId, username),
       ),
-    );
+    ));
   }
 
   Future<void> _motivateFriend(String username, int friendId) async {
@@ -1011,175 +1005,6 @@ class _LeaderboardRow extends StatelessWidget {
             style: AppText.label.copyWith(color: isMe ? AppColors.accent : AppColors.textPrimary),
           ),
         ),
-      ]),
-    );
-  }
-}
-
-// ─── Friend Detail Bottom Sheet ──────────────────────────────────────────────
-
-class _FriendDetailSheet extends StatefulWidget {
-  final String username;
-  final String email;
-  final int friendId;
-  final VoidCallback onMotivate;
-  final VoidCallback onRemove;
-
-  const _FriendDetailSheet({
-    required this.username,
-    required this.email,
-    required this.friendId,
-    required this.onMotivate,
-    required this.onRemove,
-  });
-
-  @override
-  State<_FriendDetailSheet> createState() => _FriendDetailSheetState();
-}
-
-class _FriendDetailSheetState extends State<_FriendDetailSheet> {
-  Map<String, dynamic>? _progress;
-  bool _loadingProgress = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadProgress();
-  }
-
-  Future<void> _loadProgress() async {
-    try {
-      final data = await context
-          .read<FriendsRemoteDataSource>()
-          .getFriendProgress(widget.friendId);
-      if (mounted) setState(() { _progress = data; _loadingProgress = false; });
-    } catch (_) {
-      if (mounted) setState(() => _loadingProgress = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-          24, 16, 24, MediaQuery.of(context).viewInsets.bottom + 40),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40, height: 4,
-            margin: const EdgeInsets.only(bottom: 24),
-            decoration: BoxDecoration(
-              color: AppColors.border,
-              borderRadius: BorderRadius.circular(AppRadii.chip),
-            ),
-          ),
-          // Avatar
-          Container(
-            width: 72, height: 72,
-            decoration: const BoxDecoration(
-              gradient: AppGradients.brand,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(widget.username[0].toUpperCase(),
-                  style: AppText.display.copyWith(color: AppColors.onPrimary)),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(widget.username,
-              style: AppText.question),
-          const SizedBox(height: 4),
-          Text(widget.email,
-              style: AppText.body),
-          const SizedBox(height: 20),
-
-          // Stats del amigo
-          if (_loadingProgress)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: CircularProgressIndicator(
-                  color: AppColors.accent, strokeWidth: 2),
-            )
-          else if (_progress != null) ...[
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.bgCardElevated,
-                borderRadius: BorderRadius.circular(AppRadii.button),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(children: [
-                _StatChip(
-                  icon: LucideIcons.flame,
-                  label: 'Racha',
-                  value:
-                      '${(_progress!['streak'] as Map?)?['current'] ?? 0} días',
-                ),
-                const SizedBox(width: 8),
-                _StatChip(
-                  icon: LucideIcons.chartColumn,
-                  label: '30 días',
-                  value:
-                      '${((_progress!['last30DaysAdherence'] as num?)?.toStringAsFixed(0)) ?? '0'}%',
-                ),
-                const SizedBox(width: 8),
-                _StatChip(
-                  icon: LucideIcons.pill,
-                  label: 'Activos',
-                  value: '${_progress!['activeSupplements'] ?? 0}',
-                ),
-              ]),
-            ),
-            const SizedBox(height: 16),
-          ],
-
-          // Motivar
-          AppButton(
-            label: 'Motivar',
-            icon: LucideIcons.smile,
-            size: AppButtonSize.lg,
-            expand: true,
-            onPressed: () {
-              Navigator.pop(context);
-              widget.onMotivate();
-            },
-          ),
-          const SizedBox(height: 12),
-          // Eliminar
-          AppButton(
-            label: 'Eliminar amigo',
-            icon: LucideIcons.userRoundMinus,
-            variant: AppButtonVariant.destructive,
-            expand: true,
-            onPressed: () {
-              Navigator.pop(context);
-              widget.onRemove();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  const _StatChip(
-      {required this.icon, required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(children: [
-        IconChip(icon: icon, highlighted: true),
-        const SizedBox(height: 4),
-        Text(value,
-            style: AppText.navTitle),
-        Text(label,
-            style: AppText.micro),
       ]),
     );
   }

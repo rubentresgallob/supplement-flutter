@@ -1,4 +1,6 @@
 import '../../core/network/api_client.dart';
+import '../models/calendar_models.dart';
+import '../models/friend_profile.dart';
 
 class FriendsRemoteDataSource {
   final ApiClient _apiClient;
@@ -46,6 +48,31 @@ class FriendsRemoteDataSource {
   Future<Map<String, dynamic>> getLeaderboardAdherence() async {
     final response = await _apiClient.get('/leaderboard/adherence');
     return response.data as Map<String, dynamic>;
+  }
+
+  /// Perfil de un amigo: su Capsu, racha y, si lo comparte, su stack de hoy.
+  Future<FriendProfile> getFriendProfile(int friendId) async {
+    final response = await _apiClient.get('/friends/$friendId/profile');
+    return FriendProfile.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Calendario mensual de un amigo (solo si lo comparte).
+  Future<CalendarMonth> getFriendCalendar(int friendId, int year, int month) async {
+    final response = await _apiClient.get(
+      '/friends/$friendId/calendar',
+      queryParameters: {'month': '$year-${month.toString().padLeft(2, '0')}'},
+    );
+    return CalendarMonth.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// ¿Comparto mi stack y mi calendario con mis amigos?
+  Future<bool> getSharing() async {
+    final response = await _apiClient.get('/friends/sharing');
+    return (response.data as Map<String, dynamic>)['enabled'] as bool? ?? true;
+  }
+
+  Future<void> setSharing(bool enabled) async {
+    await _apiClient.put('/friends/sharing', data: {'enabled': enabled});
   }
 
   Future<Map<String, dynamic>> getFriendProgress(int friendId) async {

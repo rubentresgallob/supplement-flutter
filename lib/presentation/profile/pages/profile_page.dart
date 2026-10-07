@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/widgets/ui/ui.dart';
 import '../../../data/datasources/local_storage_datasource.dart';
 import '../../../data/datasources/auth_remote_datasource.dart';
+import '../../../data/datasources/friends_remote_datasource.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/utils/legal_links.dart';
 import '../../auth/bloc/auth_bloc.dart';
@@ -324,6 +325,8 @@ class _ProfilePageState extends State<ProfilePage> {
                           decoration: AppDecorations.frame(),
                           child: Column(
                             children: [
+                              const _SharingTile(),
+                              const Divider(indent: 64),
                               _SettingsTile(
                                 icon: LucideIcons.bell,
                                 label: 'Notificaciones',
@@ -555,6 +558,124 @@ class _BentoStatCardWide extends StatelessWidget {
           ),
           const Icon(LucideIcons.pill, size: 28, color: AppColors.textTertiary),
         ],
+      ),
+    );
+  }
+}
+
+/// Interruptor: ¿ven mis amigos mi stack, lo que tomo hoy y mi calendario?
+class _SharingTile extends StatefulWidget {
+  const _SharingTile();
+
+  @override
+  State<_SharingTile> createState() => _SharingTileState();
+}
+
+class _SharingTileState extends State<_SharingTile> {
+  /// `null` mientras se carga.
+  bool? _enabled;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final enabled = await context.read<FriendsRemoteDataSource>().getSharing();
+      if (mounted) setState(() => _enabled = enabled);
+    } catch (_) {
+      // Sin conexión: se queda deshabilitado hasta que se pueda leer
+    }
+  }
+
+  Future<void> _toggle() async {
+    final current = _enabled;
+    if (current == null) return;
+    setState(() => _enabled = !current);
+    try {
+      await context.read<FriendsRemoteDataSource>().setSharing(!current);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _enabled = current);
+      AppToast.error(context, e.toString());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = _enabled;
+    return Semantics(
+      button: true,
+      toggled: enabled ?? false,
+      enabled: enabled != null,
+      label: 'Compartir con mis amigos mi stack y mi calendario',
+      excludeSemantics: true,
+      child: PressableScale(
+        onTap: enabled == null ? null : _toggle,
+        scale: 0.98,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpace.lg, vertical: AppSpace.md),
+          child: Row(
+            children: [
+              const IconChip(icon: LucideIcons.usersRound),
+              const SizedBox(width: AppSpace.md),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Compartir con mis amigos', style: AppText.label),
+                    SizedBox(height: 2),
+                    Text('Ven tu stack, lo que tomas hoy y tu calendario',
+                        style: AppText.micro),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpace.md),
+              _Switch(on: enabled ?? false, loading: enabled == null),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Switch extends StatelessWidget {
+  final bool on;
+  final bool loading;
+  const _Switch({required this.on, this.loading = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: loading ? 0.4 : 1,
+      child: AnimatedContainer(
+        duration: AppMotion.of(context, AppMotion.medium),
+        curve: AppMotion.standard,
+        width: 44,
+        height: 26,
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: on ? AppColors.accentStrong : AppColors.surfaceRaised,
+          borderRadius: BorderRadius.circular(AppRadii.pill),
+          border: Border.all(color: on ? AppColors.accentStrong : AppColors.border),
+        ),
+        child: AnimatedAlign(
+          duration: AppMotion.of(context, AppMotion.medium),
+          curve: AppMotion.standard,
+          alignment: on ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            width: 18,
+            height: 18,
+            decoration: const BoxDecoration(
+              color: AppColors.textPrimary,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
       ),
     );
   }
