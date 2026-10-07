@@ -18,6 +18,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<HomeMarkIntakeTakenEvent>(_onMarkIntakeTaken);
     on<HomeMarkAllIntakesTakenEvent>(_onMarkAllIntakesTaken);
     on<HomeMarkEverythingTakenEvent>(_onMarkEverythingTaken);
+    on<HomeUndoIntakeEvent>(_onUndoIntake);
     on<HomeDeleteSupplementEvent>(_onDeleteSupplement);
   }
 
@@ -133,6 +134,23 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       for (final s in current.supplements)
         s.id: s.timesPerDay - (current.progress[s.id] ?? 0),
     }, emit);
+  }
+
+  /// Deshace la última toma de hoy (un toque por error).
+  Future<void> _onUndoIntake(
+    HomeUndoIntakeEvent event,
+    Emitter<HomeState> emit,
+  ) async {
+    if (_registering.contains(event.supplementId)) return;
+    _registering.add(event.supplementId);
+    try {
+      await _intakesDataSource.undoIntake(event.supplementId);
+      add(HomeLoadSupplementsEvent());
+    } catch (e) {
+      emit(HomeErrorState(e.toString()));
+    } finally {
+      _registering.remove(event.supplementId);
+    }
   }
 
   Future<void> _onDeleteSupplement(

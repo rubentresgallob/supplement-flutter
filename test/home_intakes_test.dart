@@ -56,6 +56,15 @@ class _FakeIntakes implements IntakesRemoteDataSource {
     );
   }
 
+  final undone = <String>[];
+
+  @override
+  Future<void> undoIntake(String userSupplementId) async {
+    await gate?.future;
+    undone.add(userSupplementId);
+    taken[userSupplementId] = (taken[userSupplementId] ?? 1) - 1;
+  }
+
   @override
   Future<Map<String, dynamic>> getProgressToday() async =>
       {for (final e in taken.entries) e.key: {'taken': e.value}};
@@ -119,9 +128,21 @@ void main() {
     });
   });
 
+  test('deshacer quita una toma de hoy y recarga', () async {
+    final intakes = _FakeIntakes();
+    final bloc = HomeBloc(_FakeSupplements(), intakes, _FakeStorage());
+    bloc.add(HomeLoadSupplementsEvent());
+    expect((await _loaded(bloc)).progress['a'], 1);
+
+    bloc.add(const HomeUndoIntakeEvent('a'));
+    await bloc.stream.firstWhere((s) => s is HomeLoadedState && s.progress['a'] == 0);
+    expect(intakes.undone, ['a']);
+    await bloc.close();
+  });
+
   group('SupplementCard', () {
     Future<void> pump(WidgetTester tester, {required int taken, required int times,
-        VoidCallback? one, VoidCallback? all}) {
+        VoidCallback? one, VoidCallback? all, VoidCallback? undo}) {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
@@ -133,6 +154,7 @@ void main() {
             taken: taken,
             onMarkTaken: one ?? () {},
             onMarkAllTaken: all ?? () {},
+            onUndo: undo,
           ),
         ),
       ));
@@ -154,10 +176,18 @@ void main() {
       expect(find.textContaining('Todas'), findsNothing);
     });
 
-    testWidgets('completado: sin botones', (tester) async {
-      await pump(tester, taken: 2, times: 2);
+    testWidgets('completado: sin botones de registrar, pero se puede deshacer', (tester) async {
+      var undone = 0;
+      await pump(tester, taken: 2, times: 2, undo: () => undone++);
       expect(find.text('Completado por hoy'), findsOneWidget);
       expect(find.text('Registrar toma'), findsNothing);
+      await tester.tap(find.byTooltip('Deshacer última toma'));
+      expect(undone, 1);
+    });
+
+    testWidgets('sin tomas hoy no se ofrece deshacer', (tester) async {
+      await pump(tester, taken: 0, times: 2, undo: () {});
+      expect(find.byTooltip('Deshacer última toma'), findsNothing);
     });
   });
 }

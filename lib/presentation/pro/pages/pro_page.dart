@@ -55,7 +55,7 @@ IconData proFeatureIcon(String code) => switch (code) {
 /// Lo que se muestra si el backend aún no ha respondido.
 const _fallbackFeatures = [
   ProFeature(code: 'stock', icon: '', title: 'Control de stock', description: 'Te avisa antes de que se te acabe un suplemento.'),
-  ProFeature(code: 'stats', icon: '', title: 'Estadísticas avanzadas', description: 'Calendario de cumplimiento, gráficos y mejores días.'),
+  ProFeature(code: 'stats', icon: '', title: 'Estadísticas avanzadas', description: 'Gráficos, mejores días y cumplimiento por suplemento.'),
   ProFeature(code: 'pdf', icon: '', title: 'Informe en PDF', description: 'Para tu médico o nutricionista.'),
   ProFeature(code: 'points', icon: '', title: 'Puntos x1,5', description: 'Más puntos por cada día completo y objetivo semanal.'),
   ProFeature(code: 'protector', icon: '', title: 'Protector gratis cada mes', description: 'Tu racha, siempre a salvo.'),

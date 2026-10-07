@@ -27,6 +27,7 @@ import '../../../data/datasources/local_storage_datasource.dart';
 import '../../../domain/entities/streak.dart';
 import '../../../domain/entities/user_supplement.dart';
 import 'add_supplement_page.dart';
+import '../../calendar/pages/calendar_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -656,9 +657,22 @@ class _SupplementsTab extends StatelessWidget {
                         'Tu stack',
                         style: AppText.section,
                       ),
-                      Text(
-                        '${state.supplements.length} activos',
-                        style: AppText.micro,
+                      Semantics(
+                        button: true,
+                        label: 'Ver calendario de progreso',
+                        excludeSemantics: true,
+                        child: PressableScale(
+                          onTap: () => CalendarPage.open(context),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(LucideIcons.calendarDays,
+                                  size: 14, color: AppColors.accent),
+                              SizedBox(width: AppSpace.xs),
+                              Text('Calendario', style: AppText.brandSubtitle),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -684,6 +698,9 @@ class _SupplementsTab extends StatelessWidget {
                               s.id,
                               s.timesPerDay - taken,
                             )),
+                        onUndo: () => context
+                            .read<HomeBloc>()
+                            .add(HomeUndoIntakeEvent(s.id)),
                         onEdit: () async {
                           final updated =
                               await showModalBottomSheet<bool>(
@@ -768,7 +785,16 @@ class _SupplementsTab extends StatelessWidget {
               ),
               if (streak != null) ...[
                 const SizedBox(width: 8),
-                StreakBadge(streak: streak),
+                Semantics(
+                  button: true,
+                  hint: 'Abre el calendario',
+                  child: Builder(
+                    builder: (context) => PressableScale(
+                      onTap: () => CalendarPage.open(context),
+                      child: StreakBadge(streak: streak),
+                    ),
+                  ),
+                ),
               ],
             ],
           ),

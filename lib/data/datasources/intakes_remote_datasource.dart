@@ -1,6 +1,7 @@
 import 'dart:async';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
+import '../models/calendar_models.dart';
 import '../models/intake_model.dart';
 import '../models/streak_model.dart';
 import '../models/rewards_models.dart';
@@ -36,6 +37,25 @@ class IntakesRemoteDataSource {
     return IntakeModel.fromJson(data);
   }
   
+  /// Deshace la última toma de hoy de un suplemento.
+  Future<void> undoIntake(String userSupplementId) async {
+    await _apiClient.post(
+      ApiConstants.intakesUndo,
+      data: {
+        'userSupplementId': int.tryParse(userSupplementId) ?? userSupplementId,
+      },
+    );
+  }
+
+  /// Progreso día a día de un mes (calendario).
+  Future<CalendarMonth> getCalendar(int year, int month) async {
+    final response = await _apiClient.get(
+      ApiConstants.calendar,
+      queryParameters: {'month': '$year-${month.toString().padLeft(2, '0')}'},
+    );
+    return CalendarMonth.fromJson(response.data as Map<String, dynamic>);
+  }
+
   /// Obtiene las tomas de hoy
   Future<List<IntakeModel>> getIntakesToday() async {
     final response = await _apiClient.get(ApiConstants.intakesToday);

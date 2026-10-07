@@ -30,6 +30,8 @@ class ApiConstants {
   // Intakes endpoints
   static const String intakes = '/intakes';
   static const String intakesToday = '/intakes/today';
+  static const String intakesUndo = '/intakes/undo';
+  static const String calendar = '/calendar';
   static const String intakesProgressToday = '/intakes/progress/today';
   
   // Streaks endpoints

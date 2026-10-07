@@ -9,6 +9,9 @@ class SupplementCard extends StatefulWidget {
   final int cardIndex;
   final VoidCallback onMarkTaken;
   final VoidCallback onMarkAllTaken;
+
+  /// Deshace la última toma de hoy; solo se ofrece si hay alguna.
+  final VoidCallback? onUndo;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
@@ -18,6 +21,7 @@ class SupplementCard extends StatefulWidget {
     required this.taken,
     required this.onMarkTaken,
     required this.onMarkAllTaken,
+    this.onUndo,
     this.cardIndex = 0,
     this.onEdit,
     this.onDelete,
@@ -213,12 +217,19 @@ class _SupplementCardState extends State<SupplementCard> {
 
   /// Acciones claras en vez de un círculo: una toma, o todas las que faltan.
   Widget _buildActions(bool isComplete, int total) {
+    final canUndo = widget.onUndo != null && widget.taken > 0;
     if (isComplete) {
-      return const Row(
+      return Row(
         children: [
-          Icon(LucideIcons.circleCheck, size: 16, color: AppColors.mint),
-          SizedBox(width: AppSpace.sm),
-          Text('Completado por hoy', style: AppText.label),
+          const Icon(LucideIcons.circleCheck, size: 16, color: AppColors.mint),
+          const SizedBox(width: AppSpace.sm),
+          const Expanded(
+            child: Text('Completado por hoy',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.label),
+          ),
+          if (canUndo) _buildUndo(),
         ],
       );
     }
@@ -252,7 +263,37 @@ class _SupplementCardState extends State<SupplementCard> {
             ),
           ),
         ],
+        if (canUndo) ...[
+          const SizedBox(width: AppSpace.sm),
+          _buildUndo(),
+        ],
       ],
+    );
+  }
+
+  /// Botón pequeño para deshacer la última toma (un toque por error).
+  Widget _buildUndo() {
+    return Semantics(
+      button: true,
+      label: 'Deshacer la última toma de ${widget.supplement.name}',
+      excludeSemantics: true,
+      child: Tooltip(
+        message: 'Deshacer última toma',
+        child: PressableScale(
+          onTap: widget.onUndo,
+          scale: 0.9,
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadii.button),
+              border: Border.all(color: AppColors.borderStrong),
+            ),
+            child: const Icon(LucideIcons.undo2,
+                size: 16, color: AppColors.textSecondary),
+          ),
+        ),
+      ),
     );
   }
 
