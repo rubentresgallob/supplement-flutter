@@ -1,4 +1,7 @@
 import '../../rewards/widgets/rewards_widgets.dart';
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -50,6 +53,39 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() => _bio = result);
     }
   }
+
+  bool _exporting = false;
+
+  /// Descarga (web) o comparte (móvil) un archivo JSON con todos los datos
+  /// del usuario: es su derecho de portabilidad.
+  Future<void> _exportData(BuildContext tileContext) async {
+    if (_exporting) return;
+    setState(() => _exporting = true);
+    final box = tileContext.findRenderObject() as RenderBox?;
+    final origin = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+    try {
+      final data = await context.read<AuthRemoteDataSource>().exportData();
+      final json = const JsonEncoder.withIndent('  ').convert(data);
+      await SharePlus.instance.share(ShareParams(
+        files: [
+          XFile.fromData(
+            Uint8List.fromList(utf8.encode(json)),
+            mimeType: 'application/json',
+            name: _exportFileName,
+          ),
+        ],
+        fileNameOverrides: const [_exportFileName],
+        downloadFallbackEnabled: true,
+        sharePositionOrigin: origin,
+      ));
+    } catch (e) {
+      if (mounted) AppToast.error(context, e.toString());
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  static const _exportFileName = 'mis-datos-suplementacion.json';
 
   /// Eliminar cuenta (obligatorio en App Store y Google Play): confirmar + contraseña.
   Future<void> _deleteAccount() async {
@@ -367,6 +403,22 @@ class _ProfilePageState extends State<ProfilePage> {
                                     color: AppColors.textMuted, size: 16),
                                 onTap: () =>
                                     openLegalPage(context, LegalPage.terms),
+                              ),
+                              const Divider(indent: 64),
+                              Builder(
+                                builder: (tileContext) => _SettingsTile(
+                                  icon: LucideIcons.download,
+                                  label: 'Descargar mis datos',
+                                  trailing: _exporting
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        )
+                                      : const Icon(LucideIcons.chevronRight,
+                                          color: AppColors.textMuted),
+                                  onTap: () => _exportData(tileContext),
+                                ),
                               ),
                               const Divider(indent: 64),
                               _SettingsTile(

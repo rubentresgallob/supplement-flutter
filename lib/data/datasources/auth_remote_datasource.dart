@@ -100,6 +100,12 @@ class AuthRemoteDataSource {
     return user;
   }
 
+  /// Todos mis datos en JSON (derecho de portabilidad).
+  Future<Map<String, dynamic>> exportData() async {
+    final response = await _apiClient.get('/auth/export');
+    return response.data as Map<String, dynamic>;
+  }
+
   /// Borra la cuenta y todos sus datos en el servidor (pide la contraseña).
   Future<void> deleteAccount(String password) async {
     await _apiClient.post(ApiConstants.deleteAccount, data: {'password': password});

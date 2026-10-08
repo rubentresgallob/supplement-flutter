@@ -43,6 +43,7 @@ dependencies:
   pdf: ^3.13.1
   printing: ^5.15.1
   url_launcher: ^6.3.2
+  share_plus: ^12.0.2
 
 dev_dependencies:
   flutter_test:
@@ -54,6 +55,12 @@ flutter:
   assets:
     - assets/shop/
   fonts:
+    # El motor web de Flutter descarga Roboto desde los servidores de Google al
+    # arrancar si no hay una familia "Roboto" en los assets. La declaramos (con
+    # Poppins, que es lo que usa la app) para que la web no llame a Google.
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
     - family: Poppins
       fonts:
         - asset: assets/fonts/Poppins-Regular.ttf

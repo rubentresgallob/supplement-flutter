@@ -160,7 +160,13 @@ class _FriendsTabState extends State<_FriendsTab> {
             .read<FriendsRemoteDataSource>()
             .sendRequest(identifier);
         if (mounted) {
-          _showSnack('Solicitud enviada', isSuccess: true);
+          // Con un email el servidor no confirma si existe cuenta (privacidad)
+          _showSnack(
+            identifier.contains('@')
+                ? 'Si hay una cuenta con ese email, recibirá tu solicitud'
+                : 'Solicitud enviada',
+            isSuccess: true,
+          );
           _load();
         }
       } catch (e) {
@@ -334,7 +340,7 @@ class _FriendsTabState extends State<_FriendsTab> {
                               children: [
                                 Text(username,
                                     style: AppText.label),
-                                Text(from['email'] as String,
+                                Text('Quiere ser tu amigo',
                                     style: AppText.caption.copyWith(color: AppColors.textSecondary)),
                               ]),
                         ),
@@ -441,7 +447,7 @@ class _FriendsTabState extends State<_FriendsTab> {
                                 children: [
                                   Text(username,
                                       style: AppText.label),
-                                  Text(friend['email'] as String,
+                                  Text('Ver perfil',
                                       style: AppText.caption.copyWith(color: AppColors.textSecondary)),
                                 ]),
                           ),
