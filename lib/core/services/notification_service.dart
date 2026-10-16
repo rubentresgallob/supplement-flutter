@@ -73,8 +73,6 @@ class NotificationService {
       _plugin.resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin>();
 
-  static bool _askedExactThisSession = false;
-
   /// Pide los permisos necesarios para los recordatorios.
   /// Devuelve `true` si las notificaciones se podrán mostrar.
   ///
@@ -83,16 +81,7 @@ class NotificationService {
     if (kIsWeb) return false;
     final android = _android;
     if (android != null) {
-      final granted = await android.requestNotificationsPermission() ?? false;
-      // Alarmas exactas (Android 12+): si no están permitidas, abrimos los
-      // ajustes UNA vez por sesión. Si el usuario no las concede, los
-      // recordatorios siguen funcionando en modo inexacto (unos minutos de margen).
-      final canExact = await android.canScheduleExactNotifications() ?? true;
-      if (granted && !canExact && !_askedExactThisSession) {
-        _askedExactThisSession = true;
-        await android.requestExactAlarmsPermission();
-      }
-      return granted;
+      return await android.requestNotificationsPermission() ?? false;
     }
     final ios = _ios;
     if (ios != null) {
@@ -133,10 +122,9 @@ class NotificationService {
     if (kIsWeb) return;
     await cancelReminder(id);
 
-    final canExact = await _android?.canScheduleExactNotifications() ?? true;
-    final scheduleMode = canExact
-        ? AndroidScheduleMode.exactAllowWhileIdle
-        : AndroidScheduleMode.inexactAllowWhileIdle;
+    // Inexacto a propósito: Google Play restringe las alarmas exactas a apps de
+    // alarma y calendario. El aviso puede llegar con unos minutos de margen.
+    const scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
 
     final plan = reminderPlan(
       id: id,

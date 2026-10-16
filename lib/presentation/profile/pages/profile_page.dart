@@ -331,15 +331,6 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                               const Divider(indent: 64),
                               _SettingsTile(
-                                icon: LucideIcons.bell,
-                                label: 'Notificaciones',
-                                trailing: const Icon(
-                                    LucideIcons.chevronRight,
-                                    color: AppColors.textMuted),
-                                onTap: () {},
-                              ),
-                              const Divider(indent: 64),
-                              _SettingsTile(
                                 icon: LucideIcons.pill,
                                 label: 'Ver tutorial de Capsu',
                                 trailing: const Icon(
