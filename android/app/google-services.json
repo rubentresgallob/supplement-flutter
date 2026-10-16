@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "545686515994",
+    "project_id": "mi-suplementacion-app",
+    "storage_bucket": "mi-suplementacion-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:545686515994:android:0c1787cf7e2f7199f03ca3",
+        "android_client_info": {
+          "package_name": "com.supplement.tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZtC0AHfIyqyCFHcKrBuFR3UtE4YdvXQ8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -36,8 +36,11 @@ class FriendsRemoteDataSource {
     await _apiClient.delete('/friends/$friendId');
   }
 
-  Future<void> sendMotivation(int friendId) async {
-    await _apiClient.post('/friends/$friendId/motivate');
+  /// Manda un push al amigo. Devuelve si le ha llegado a algún móvil.
+  Future<bool> sendMotivation(int friendId) async {
+    final response = await _apiClient.post('/friends/$friendId/motivate');
+    final data = response.data;
+    return data is Map && data['delivered'] == true;
   }
 
   Future<Map<String, dynamic>> getLeaderboardStreaks() async {

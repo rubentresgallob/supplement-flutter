@@ -5,7 +5,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/datasources/friends_remote_datasource.dart';
 import '../../../core/widgets/ui/ui.dart';
-import '../../../core/services/notification_service.dart';
 import '../../rewards/bloc/rewards_cubit.dart';
 
 class FriendsPage extends StatefulWidget {
@@ -229,10 +228,17 @@ class _FriendsTabState extends State<_FriendsTab> {
   Future<void> _motivateFriend(String username, int friendId) async {
     final ds = context.read<FriendsRemoteDataSource>();
     try {
-      await ds.sendMotivation(friendId);
-    } catch (_) {}
-    await NotificationService.showMotivationSent(username);
-    if (mounted) _showSnack('Ánimos enviados a $username', isSuccess: true);
+      final delivered = await ds.sendMotivation(friendId);
+      if (!mounted) return;
+      if (delivered) {
+        _showSnack('Ánimos enviados a $username', isSuccess: true);
+      } else {
+        // Le llegará cuando tenga la app con los avisos activados
+        _showSnack('$username aún no tiene los avisos activados');
+      }
+    } catch (e) {
+      if (mounted) _showSnack(e.toString(), isError: true);
+    }
   }
 
   void _showSnack(String msg, {bool isError = false, bool isSuccess = false}) {

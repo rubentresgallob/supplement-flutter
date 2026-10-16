@@ -52,7 +52,7 @@ Future<Uint8List> buildStatsPdf(StatsReport report, String username) async {
       footer: (context) => pw.Align(
         alignment: pw.Alignment.centerRight,
         child: pw.Text(
-          'Generado con Suplementos Tracker Pro · Página ${context.pageNumber} de ${context.pagesCount}',
+          'Generado con Supplement Tracker Pro · Página ${context.pageNumber} de ${context.pagesCount}',
           style: const pw.TextStyle(color: grey, fontSize: 8),
         ),
       ),

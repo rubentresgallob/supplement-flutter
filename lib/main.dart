@@ -5,6 +5,7 @@ import 'package:timezone/timezone.dart' as tz_lib;
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'core/network/api_client.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/push_service.dart';
 import 'data/datasources/local_storage_datasource.dart';
 import 'data/datasources/auth_remote_datasource.dart';
 import 'data/datasources/supplements_remote_datasource.dart';
@@ -14,6 +15,7 @@ import 'data/datasources/rewards_remote_datasource.dart';
 import 'data/datasources/pro_remote_datasource.dart';
 import 'presentation/auth/bloc/auth_bloc.dart';
 import 'presentation/auth/bloc/auth_event.dart';
+import 'presentation/auth/bloc/auth_state.dart';
 import 'presentation/app.dart';
 
 void main() async {
@@ -50,7 +52,13 @@ void main() async {
   final rewardsDataSource = RewardsRemoteDataSource(apiClient);
   final proDataSource = ProRemoteDataSource(apiClient);
 
+  // Avisos push de los amigos: el móvil se registra cada vez que hay sesión
+  await PushService.initialize(apiClient);
+
   final authBloc = AuthBloc(authDataSource, localStorage);
+  authBloc.stream.listen((state) {
+    if (state is AuthAuthenticatedState) PushService.register();
+  });
   authBloc.add(AuthCheckStatusEvent());
 
   runApp(

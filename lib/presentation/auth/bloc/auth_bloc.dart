@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/errors/exceptions.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/services/push_service.dart';
 import '../../../data/datasources/auth_remote_datasource.dart';
 import '../../../data/datasources/local_storage_datasource.dart';
 import 'auth_event.dart';
@@ -88,6 +89,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     try {
       emit(AuthLoadingState());
+      // Antes de borrar la sesión: el backend necesita saber quién se da de baja
+      await PushService.unregister();
       await _authDataSource.logout();
       // Que el siguiente usuario del móvil no reciba los avisos de este
       await NotificationService.cancelAll();

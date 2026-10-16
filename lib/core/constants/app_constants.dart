@@ -5,7 +5,7 @@ export '../design/tokens.dart' show AppColors, AppGradients;
 export '../design/typography.dart';
 
 class AppConstants {
-  static const String appName = 'Suplementos Tracker';
+  static const String appName = 'Supplement Tracker';
   static const String disclaimer =
       'La responsabilidad sobre el uso y legalidad del suplemento recae en el usuario. Consulta siempre con un profesional sanitario.';
 

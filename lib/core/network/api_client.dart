@@ -119,11 +119,13 @@ class ApiClient {
   /// Realiza una petición DELETE
   Future<Response> delete(
     String path, {
+    dynamic data,
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
       final response = await _dio.delete(
         path,
+        data: data,
         queryParameters: queryParameters,
       );
       return response;
@@ -171,6 +173,9 @@ class ApiClient {
         }
         return AuthException('Sesión expirada. Por favor, inicia sesión nuevamente.');
       case 429:
+        if (data is Map && data['code'] == 'ALREADY_MOTIVATED') {
+          return ValidationException(message);
+        }
         return ValidationException('Demasiados intentos. Espera un poco y vuelve a probar.');
       case 503:
         return ServerException(message);

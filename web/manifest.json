@@ -1,11 +1,11 @@
 {
-    "name": "supplement_tracker",
-    "short_name": "supplement_tracker",
+    "name": "Supplement Tracker",
+    "short_name": "Supplement Tracker",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "description": "Tu stack diario de suplementos, con racha, calendario y amigos.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

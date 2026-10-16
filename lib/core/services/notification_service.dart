@@ -11,9 +11,18 @@ class NotificationService {
   static const _smallIcon = 'ic_stat_capsu';
   static const _accent = Color(0xFFFF6B35);
 
-  /// ID fijo para la notificación de "ánimos enviados" (fuera del rango de IDs
-  /// de suplementos, que son los IDs numéricos del backend).
-  static const _motivationId = 2147480000;
+  /// ID fijo para los avisos push que llegan con la app abierta (fuera del
+  /// rango de IDs de suplementos, que son los IDs numéricos del backend).
+  static const _pushId = 2147480000;
+
+  /// Canal de Android de los avisos de amigos. El backend manda los push con
+  /// este mismo `channelId`.
+  static const _friendsChannel = AndroidNotificationChannel(
+    'friends',
+    'Amigos',
+    description: 'Cuando un amigo te motiva',
+    importance: Importance.high,
+  );
 
   /// Los IDs base de suplemento son < 100 M para que los avisos sueltos
   /// (1.000.000.000 + id·10 + día) quepan en un entero de 32 bits.
@@ -53,6 +62,7 @@ class NotificationService {
     await _plugin.initialize(
       const InitializationSettings(android: android, iOS: ios),
     );
+    await _android?.createNotificationChannel(_friendsChannel);
   }
 
   static AndroidFlutterLocalNotificationsPlugin? get _android =>
@@ -216,22 +226,24 @@ class NotificationService {
     return _plugin.pendingNotificationRequests();
   }
 
-  static Future<void> showMotivationSent(String friendName) async {
+  /// Muestra un aviso push que ha llegado con la app abierta.
+  static Future<void> showPush(String title, String body) async {
     if (kIsWeb) return;
     await _plugin.show(
-      _motivationId,
-      '¡Ánimos enviados!',
-      'Has motivado a $friendName. ¡Seguid así!',
-      const NotificationDetails(
+      _pushId,
+      title,
+      body,
+      NotificationDetails(
         android: AndroidNotificationDetails(
-          'motivation',
-          'Motivaciones',
-          channelDescription: 'Motivaciones entre amigos',
-          importance: Importance.defaultImportance,
+          _friendsChannel.id,
+          _friendsChannel.name,
+          channelDescription: _friendsChannel.description,
+          importance: Importance.high,
+          priority: Priority.high,
           icon: _smallIcon,
           color: _accent,
         ),
-        iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
+        iOS: const DarwinNotificationDetails(presentAlert: true, presentSound: true),
       ),
     );
   }
