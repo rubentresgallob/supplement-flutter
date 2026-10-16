@@ -54,6 +54,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/shop/
+    # Textos legales: se muestran en la app y la web los sirve en /privacidad y /terminos
+    - docs/legal/
   fonts:
     # El motor web de Flutter descarga Roboto desde los servidores de Google al
     # arrancar si no hay una familia "Roboto" en los assets. La declaramos (con

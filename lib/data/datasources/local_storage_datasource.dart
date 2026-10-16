@@ -53,6 +53,11 @@ class LocalStorageDataSource {
     await _secureStorage.delete(key: AppConstants.tokenKey);
     await _prefs.remove(AppConstants.userIdKey);
     await _prefs.remove(AppConstants.usernameKey);
+    // Lo personal que solo vive en el móvil tampoco debe verlo quien entre después
+    await _prefs.remove('user_bio');
+    for (final key in _prefs.getKeys().where((k) => k.startsWith('notif_time_')).toList()) {
+      await _prefs.remove(key);
+    }
   }
 
   // ── Horarios de notificación ──────────────────────────────────────────────

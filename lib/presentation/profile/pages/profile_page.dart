@@ -357,8 +357,8 @@ class _ProfilePageState extends State<ProfilePage> {
                               _SettingsTile(
                                 icon: LucideIcons.shieldCheck,
                                 label: 'Política de privacidad',
-                                trailing: const Icon(LucideIcons.externalLink,
-                                    color: AppColors.textMuted, size: 16),
+                                trailing: const Icon(LucideIcons.chevronRight,
+                                    color: AppColors.textMuted),
                                 onTap: () =>
                                     openLegalPage(context, LegalPage.privacy),
                               ),
@@ -366,8 +366,8 @@ class _ProfilePageState extends State<ProfilePage> {
                               _SettingsTile(
                                 icon: LucideIcons.fileText,
                                 label: 'Términos de uso',
-                                trailing: const Icon(LucideIcons.externalLink,
-                                    color: AppColors.textMuted, size: 16),
+                                trailing: const Icon(LucideIcons.chevronRight,
+                                    color: AppColors.textMuted),
                                 onTap: () =>
                                     openLegalPage(context, LegalPage.terms),
                               ),

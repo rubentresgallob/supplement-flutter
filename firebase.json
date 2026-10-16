@@ -2,6 +2,16 @@
   "hosting": {
     "public": "build/web",
     "ignore": ["firebase.json", "**/.*"],
-    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+    "rewrites": [
+      { "source": "/privacidad", "destination": "/assets/docs/legal/politica-privacidad.html" },
+      { "source": "/terminos", "destination": "/assets/docs/legal/terminos.html" },
+      { "source": "**", "destination": "/index.html" }
+    ],
+    "headers": [
+      {
+        "source": "/assets/docs/legal/*.html",
+        "headers": [{ "key": "Content-Type", "value": "text/html; charset=utf-8" }]
+      }
+    ]
   }
 }
