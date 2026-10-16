@@ -14,15 +14,20 @@ import 'package:supplement_tracker/presentation/rewards/bloc/rewards_cubit.dart'
 import 'calendar_test.dart' show monthJson;
 
 /// Respuesta con la misma forma que devuelve el backend (`GET /friends/:id/profile`).
-Map<String, dynamic> profileJson({bool sharing = true}) => {
+Map<String, dynamic> profileJson({bool progress = true, bool supplements = true}) => {
       'user': {'id': 2, 'username': 'laura'},
-      'streak': {'current': 12, 'longest': 30},
-      'activeSupplements': 2,
-      'last30DaysAdherence': 87,
-      'memberSince': '2026-03-04T10:00:00.000Z',
-      'equipped': {'capsu_head': 'capsu_head_crown', 'capsu_skin': 'capsu_skin_galaxy', 'banner': 'banner_galaxy'},
-      'sharing': sharing,
-      'today': sharing
+      'memberSince': '2026-03',
+      'equipped': {'capsu_head': 'capsu_head_crown', 'banner': 'banner_galaxy'},
+      'sharesProgress': progress,
+      'sharesSupplements': supplements,
+      'progress': progress
+          ? {
+              'streak': {'current': 12, 'longest': 30},
+              'activeSupplements': 2,
+              'last30DaysAdherence': 87,
+            }
+          : null,
+      'today': supplements
           ? {
               'supplements': [
                 {'id': 1, 'name': 'Creatina', 'form': 'polvo', 'dosageAmount': 5, 'dosageUnit': 'g', 'taken': 1, 'expected': 1},
@@ -36,13 +41,14 @@ Map<String, dynamic> profileJson({bool sharing = true}) => {
     };
 
 class FakeFriends implements FriendsRemoteDataSource {
-  final bool sharing;
+  final bool progress;
+  final bool supplements;
   final calendarRequests = <String>[];
-  FakeFriends({this.sharing = true});
+  FakeFriends({this.progress = true, this.supplements = true});
 
   @override
   Future<FriendProfile> getFriendProfile(int friendId) async =>
-      FriendProfile.fromJson(profileJson(sharing: sharing));
+      FriendProfile.fromJson(profileJson(progress: progress, supplements: supplements));
 
   @override
   Future<CalendarMonth> getFriendCalendar(int friendId, int year, int month) async {
@@ -104,8 +110,11 @@ void main() {
     expect(p.pendingToday.single.name, 'Omega 3');
     expect(p.today!.last.detail, '1,5 g · cápsula');
 
-    final hidden = FriendProfile.fromJson(profileJson(sharing: false));
-    expect(hidden.sharing, isFalse);
+    expect(p.memberSince, DateTime(2026, 3));
+
+    final hidden = FriendProfile.fromJson(profileJson(progress: false, supplements: false));
+    expect(hidden.sharesProgress, isFalse);
+    expect(hidden.currentStreak, isNull);
     expect(hidden.today, isNull);
   });
 
@@ -136,18 +145,31 @@ void main() {
     expect(source.calendarRequests.single, startsWith('2:'));
   });
 
-  testWidgets('si no comparte, no se ve su stack ni su calendario', (tester) async {
+  testWidgets('con los interruptores apagados no se ve su progreso, ni su stack, ni su calendario', (tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(friendApp(FakeFriends(sharing: false)));
+    await tester.pumpWidget(friendApp(FakeFriends(progress: false, supplements: false)));
     await frames(tester);
 
-    expect(find.text('laura prefiere no compartir su stack'), findsOneWidget);
-    expect(find.text('12'), findsOneWidget); // la racha sí se ve
+    expect(find.text('laura no comparte su progreso'), findsOneWidget);
+    expect(find.text('laura no comparte sus suplementos'), findsOneWidget);
+    expect(find.text('12'), findsNothing);
     expect(find.text('Creatina'), findsNothing);
     expect(find.text('Ver su calendario'), findsNothing);
     expect(find.text('Motivar'), findsOneWidget);
+  });
+
+  testWidgets('solo con "Compartir mi progreso" se ve la racha pero no el stack', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(friendApp(FakeFriends(progress: true, supplements: false)));
+    await frames(tester);
+
+    expect(find.text('12'), findsOneWidget);
+    expect(find.text('Creatina'), findsNothing);
   });
 }

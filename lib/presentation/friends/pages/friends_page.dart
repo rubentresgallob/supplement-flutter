@@ -1,4 +1,7 @@
 import 'friend_profile_page.dart';
+import 'social_privacy_page.dart';
+import '../widgets/moderation_actions.dart';
+import '../../../data/models/friend_profile.dart';
 import '../../rewards/widgets/rewards_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -154,6 +157,8 @@ class _FriendsTabState extends State<_FriendsTab> {
       icon: LucideIcons.userRoundSearch,
     );
     if (identifier != null && identifier.isNotEmpty && mounted) {
+      // La primera vez: qué verán sus amigos y los interruptores
+      if (!await ensureSocialPrivacyIntro(context) || !mounted) return;
       try {
         await context
             .read<FriendsRemoteDataSource>()
@@ -173,6 +178,7 @@ class _FriendsTabState extends State<_FriendsTab> {
   }
 
   Future<void> _accept(int requestId) async {
+    if (!await ensureSocialPrivacyIntro(context) || !mounted) return;
     try {
       await context.read<FriendsRemoteDataSource>().acceptRequest(requestId);
       _load();
@@ -221,6 +227,7 @@ class _FriendsTabState extends State<_FriendsTab> {
         onRemove: () => _remove(friendId, username),
       ),
     ));
+    if (mounted) _load(); // por si le ha bloqueado
   }
 
   Future<void> _motivateFriend(String username, int friendId) async {
@@ -237,6 +244,14 @@ class _FriendsTabState extends State<_FriendsTab> {
     } catch (e) {
       if (mounted) _showSnack(e.toString(), isError: true);
     }
+  }
+
+  /// "En la app desde oct. 2026" (a los amigos solo se les da el mes y el año)
+  static String _since(String? month) {
+    final d = FriendProfile.parseMonth(month);
+    if (d == null) return 'Ver perfil';
+    const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    return 'En la app desde ${months[d.month - 1]}. ${d.year}';
   }
 
   void _showSnack(String msg, {bool isError = false, bool isSuccess = false}) {
@@ -325,6 +340,7 @@ class _FriendsTabState extends State<_FriendsTab> {
                   final req = _requests[i];
                   final from = req['from'] as Map<String, dynamic>;
                   final username = from['username'] as String;
+                  final fromId = from['id'] as int;
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
                     child: Container(
@@ -363,6 +379,11 @@ class _FriendsTabState extends State<_FriendsTab> {
                           ),
                         ),
                         const SizedBox(width: 8),
+                        ModerationMenuButton(
+                          userId: fromId,
+                          username: username,
+                          onBlocked: _load,
+                        ),
                         GestureDetector(
                           onTap: () => _reject(req['requestId'] as int),
                           child: Container(
@@ -451,7 +472,7 @@ class _FriendsTabState extends State<_FriendsTab> {
                                 children: [
                                   Text(username,
                                       style: AppText.label),
-                                  Text('Ver perfil',
+                                  Text(_since(item['memberSince'] as String?),
                                       style: AppText.caption.copyWith(color: AppColors.textSecondary)),
                                 ]),
                           ),
@@ -481,6 +502,10 @@ class _FriendsTabState extends State<_FriendsTab> {
 
 // ─── Tab Clasificación ───────────────────────────────────────────────────────
 
+/// No sale en la clasificación de sus amigos hasta que comparta su progreso.
+const _notSharingHint =
+    'Tú no apareces en la clasificación de tus amigos: activa "Compartir mi progreso" en Perfil si quieres salir.';
+
 class _LeaderboardTab extends StatefulWidget {
   const _LeaderboardTab();
 
@@ -493,6 +518,7 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
   List<Map<String, dynamic>> _streakBoard = [];
   List<Map<String, dynamic>> _adherenceBoard = [];
   bool _isLoading = true;
+  bool _meSharing = true;
   String? _error;
 
   @override
@@ -509,6 +535,7 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
         ds.getLeaderboardStreaks(),
         ds.getLeaderboardAdherence(),
       ]);
+      _meSharing = results[0]['meSharing'] as bool? ?? true;
       final streakData = results[0]['leaderboard'] as List<dynamic>;
       final adherenceData = results[1]['leaderboard'] as List<dynamic>;
       setState(() {
@@ -576,10 +603,14 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
                   style: AppText.section),
               const SizedBox(height: 8),
               const Text(
-                'Añade amigos para ver\nquién lleva la racha más larga',
+                'Aquí salen tus amigos que comparten su progreso',
                 textAlign: TextAlign.center,
                 style: AppText.body,
               ),
+              if (!_meSharing) ...[
+                const SizedBox(height: AppSpace.md),
+                const Text(_notSharingHint, textAlign: TextAlign.center, style: AppText.caption),
+              ],
             ],
           ),
         ),
@@ -620,6 +651,14 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
               ),
             ),
           ),
+
+          if (!_meSharing)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(AppSpace.screen, 0, AppSpace.screen, AppSpace.md),
+                child: Text(_notSharingHint, style: AppText.caption),
+              ),
+            ),
 
           // Podio top 3
           if (board.length >= 3)

@@ -41,22 +41,28 @@ class FriendSupplementToday extends Equatable {
 }
 
 /// Perfil de un amigo (`GET /friends/:id/profile`).
+/// Siempre: nombre, objetos equipados y mes de alta. El progreso y el stack de hoy
+/// solo llegan si el amigo tiene activado el interruptor correspondiente.
 class FriendProfile extends Equatable {
   final int id;
   final String username;
+
+  /// Mes y año de alta (día 1 de ese mes).
   final DateTime? memberSince;
 
   /// Objetos equipados (slot → código): su Capsu, medalla y banner.
   final Map<String, String> equipped;
-  final int currentStreak;
-  final int longestStreak;
-  final int activeSupplements;
-  final int adherence30Days;
 
-  /// Si comparte su stack y su calendario con sus amigos.
-  final bool sharing;
+  final bool sharesProgress;
+  final bool sharesSupplements;
 
-  /// Su stack de hoy; `null` si no lo comparte.
+  /// `null` si no comparte su progreso.
+  final int? currentStreak;
+  final int? longestStreak;
+  final int? activeSupplements;
+  final int? adherence30Days;
+
+  /// Su stack de hoy; `null` si no comparte sus suplementos.
   final List<FriendSupplementToday>? today;
 
   const FriendProfile({
@@ -64,12 +70,13 @@ class FriendProfile extends Equatable {
     required this.username,
     required this.memberSince,
     required this.equipped,
-    required this.currentStreak,
-    required this.longestStreak,
-    required this.activeSupplements,
-    required this.adherence30Days,
-    required this.sharing,
-    required this.today,
+    required this.sharesProgress,
+    required this.sharesSupplements,
+    this.currentStreak,
+    this.longestStreak,
+    this.activeSupplements,
+    this.adherence30Days,
+    this.today,
   });
 
   int get takenToday => (today ?? const []).fold(0, (a, s) => a + s.taken);
@@ -79,22 +86,29 @@ class FriendProfile extends Equatable {
   List<FriendSupplementToday> get pendingToday =>
       (today ?? const []).where((s) => !s.complete).toList();
 
+  /// "2026-10" → 1 de octubre de 2026.
+  static DateTime? parseMonth(String? value) {
+    final m = RegExp(r'^(\d{4})-(\d{2})').firstMatch(value ?? '');
+    return m == null ? null : DateTime(int.parse(m.group(1)!), int.parse(m.group(2)!));
+  }
+
   factory FriendProfile.fromJson(Map<String, dynamic> json) {
     final user = json['user'] as Map<String, dynamic>? ?? const {};
-    final streak = json['streak'] as Map<String, dynamic>? ?? const {};
+    final progress = json['progress'] as Map<String, dynamic>?;
+    final streak = progress?['streak'] as Map<String, dynamic>?;
     final today = json['today'] as Map<String, dynamic>?;
-    final since = json['memberSince'] as String?;
     return FriendProfile(
       id: user['id'] as int? ?? 0,
       username: user['username'] as String? ?? '',
-      memberSince: since == null ? null : DateTime.tryParse(since),
+      memberSince: parseMonth(json['memberSince'] as String?),
       equipped: (json['equipped'] as Map<String, dynamic>? ?? const {})
           .map((k, v) => MapEntry(k, v.toString())),
-      currentStreak: streak['current'] as int? ?? 0,
-      longestStreak: streak['longest'] as int? ?? 0,
-      activeSupplements: json['activeSupplements'] as int? ?? 0,
-      adherence30Days: (json['last30DaysAdherence'] as num? ?? 0).round(),
-      sharing: json['sharing'] as bool? ?? false,
+      sharesProgress: json['sharesProgress'] as bool? ?? false,
+      sharesSupplements: json['sharesSupplements'] as bool? ?? false,
+      currentStreak: streak?['current'] as int?,
+      longestStreak: streak?['longest'] as int?,
+      activeSupplements: progress?['activeSupplements'] as int?,
+      adherence30Days: (progress?['last30DaysAdherence'] as num?)?.round(),
       today: today == null
           ? null
           : (today['supplements'] as List<dynamic>? ?? [])
@@ -105,7 +119,7 @@ class FriendProfile extends Equatable {
 
   @override
   List<Object?> get props => [
-        id, username, memberSince, equipped, currentStreak, longestStreak,
-        activeSupplements, adherence30Days, sharing, today,
+        id, username, memberSince, equipped, sharesProgress, sharesSupplements,
+        currentStreak, longestStreak, activeSupplements, adherence30Days, today,
       ];
 }

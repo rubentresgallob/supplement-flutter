@@ -8,9 +8,10 @@ import '../../../data/models/friend_profile.dart';
 import '../../calendar/pages/calendar_page.dart';
 import '../../rewards/bloc/rewards_cubit.dart';
 import '../../rewards/widgets/rewards_widgets.dart';
+import '../widgets/moderation_actions.dart';
 
-/// Perfil de un amigo: su Capsu tal como lo lleva, su racha y, si lo comparte,
-/// su stack de hoy y su calendario.
+/// Perfil de un amigo: su Capsu tal como lo lleva y, si los comparte, su progreso,
+/// su stack de hoy y su calendario. Desde aquí se le puede bloquear o denunciar.
 class FriendProfilePage extends StatefulWidget {
   final int friendId;
   final String username;
@@ -74,6 +75,13 @@ class _FriendProfilePageState extends State<FriendProfilePage> {
           icon: const Icon(LucideIcons.chevronLeft),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          ModerationMenuButton(
+            userId: widget.friendId,
+            username: widget.username,
+            onBlocked: () => Navigator.of(context).pop(),
+          ),
+        ],
       ),
       body: AmbientBackground(
         child: SafeArea(
@@ -101,12 +109,18 @@ class _FriendProfilePageState extends State<FriendProfilePage> {
                             children: [
                               _Hero(profile: profile),
                               const SizedBox(height: AppSpace.lg),
-                              _Stats(profile: profile),
+                              profile.sharesProgress
+                                  ? _Stats(profile: profile)
+                                  : _Today.note(
+                                      LucideIcons.lock,
+                                      '${profile.username} no comparte su progreso',
+                                      'Si lo activa en su perfil, verás su racha y su cumplimiento.',
+                                    ),
                               const SizedBox(height: AppSpace.xl),
                               const Text('Hoy', style: AppText.section),
                               const SizedBox(height: AppSpace.md),
                               _Today(profile: profile),
-                              if (profile.sharing) ...[
+                              if (profile.sharesSupplements) ...[
                                 const SizedBox(height: AppSpace.md),
                                 AppButton(
                                   label: 'Ver su calendario',
@@ -282,9 +296,9 @@ class _Stats extends StatelessWidget {
     return GlassCard(
       child: Row(
         children: [
-          stat('${profile.currentStreak}', 'días de racha', LucideIcons.flame),
-          stat('${profile.longestStreak}', 'mejor racha', LucideIcons.trophy),
-          stat('${profile.adherence30Days}%', 'últimos 30 días', LucideIcons.chartColumn),
+          stat('${profile.currentStreak ?? 0}', 'días de racha', LucideIcons.flame),
+          stat('${profile.longestStreak ?? 0}', 'mejor racha', LucideIcons.trophy),
+          stat('${profile.adherence30Days ?? 0}%', 'últimos 30 días', LucideIcons.chartColumn),
         ],
       ),
     );
@@ -299,15 +313,15 @@ class _Today extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final today = profile.today;
-    if (!profile.sharing || today == null) {
-      return _note(
+    if (!profile.sharesSupplements || today == null) {
+      return note(
         LucideIcons.lock,
-        '${profile.username} prefiere no compartir su stack',
-        'Puedes ver su Capsu, su racha y su cumplimiento.',
+        '${profile.username} no comparte sus suplementos',
+        'Si lo activa en su perfil, verás lo que toma hoy y su calendario.',
       );
     }
     if (today.isEmpty) {
-      return _note(LucideIcons.pill, 'Aún no tiene suplementos',
+      return note(LucideIcons.pill, 'Aún no tiene suplementos',
           'Cuando añada alguno, lo verás aquí.');
     }
 
@@ -391,7 +405,7 @@ class _Today extends StatelessWidget {
     );
   }
 
-  Widget _note(IconData icon, String title, String body) => Container(
+  static Widget note(IconData icon, String title, String body) => Container(
         padding: const EdgeInsets.all(AppSpace.lg),
         decoration: AppDecorations.frame(),
         child: Row(

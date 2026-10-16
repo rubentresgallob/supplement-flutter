@@ -68,18 +68,73 @@ class FriendsRemoteDataSource {
     return CalendarMonth.fromJson(response.data as Map<String, dynamic>);
   }
 
-  /// ¿Comparto mi stack y mi calendario con mis amigos?
-  Future<bool> getSharing() async {
+  /// Mis interruptores de privacidad con los amigos.
+  Future<SharingSettings> getSharing() async {
     final response = await _apiClient.get('/friends/sharing');
-    return (response.data as Map<String, dynamic>)['enabled'] as bool? ?? true;
+    return SharingSettings.fromJson(response.data as Map<String, dynamic>);
   }
 
-  Future<void> setSharing(bool enabled) async {
-    await _apiClient.put('/friends/sharing', data: {'enabled': enabled});
+  /// Cambia solo lo que se pasa (el servidor guarda cada activación y desactivación).
+  Future<SharingSettings> setSharing({bool? progress, bool? supplements, bool? introSeen}) async {
+    final response = await _apiClient.put('/friends/sharing', data: {
+      if (progress != null) 'progress': progress,
+      if (supplements != null) 'supplements': supplements,
+      if (introSeen != null) 'introSeen': introSeen,
+    });
+    return SharingSettings.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  // ── Bloquear y denunciar ──
+
+  Future<void> blockUser(int userId) async {
+    await _apiClient.post('/users/$userId/block');
+  }
+
+  Future<void> unblockUser(int userId) async {
+    await _apiClient.delete('/users/$userId/block');
+  }
+
+  Future<List<({int id, String username})>> getBlockedUsers() async {
+    final response = await _apiClient.get('/users/blocked');
+    return (response.data as List<dynamic>)
+        .map((e) => e as Map<String, dynamic>)
+        .map((e) => (id: e['id'] as int, username: e['username'] as String))
+        .toList();
+  }
+
+  /// [reason]: offensive_name · impersonation · harassment · other
+  Future<void> reportUser(int userId, String reason, String? details) async {
+    await _apiClient.post('/users/$userId/report', data: {
+      'reason': reason,
+      if (details != null) 'details': details,
+    });
   }
 
   Future<Map<String, dynamic>> getFriendProgress(int friendId) async {
     final response = await _apiClient.get('/friends/$friendId/progress');
     return response.data as Map<String, dynamic>;
   }
+}
+
+/// Interruptores: "Compartir mi progreso" y "Compartir mis suplementos" (apagados por defecto).
+class SharingSettings {
+  final bool progress;
+  final bool supplements;
+
+  /// Ya vio la pantalla que explica qué ven sus amigos.
+  final bool introSeen;
+
+  const SharingSettings({required this.progress, required this.supplements, required this.introSeen});
+
+  factory SharingSettings.fromJson(Map<String, dynamic> json) => SharingSettings(
+        progress: json['progress'] as bool? ?? false,
+        supplements: json['supplements'] as bool? ?? false,
+        introSeen: json['introSeen'] as bool? ?? false,
+      );
+
+  SharingSettings copyWith({bool? progress, bool? supplements}) => SharingSettings(
+        progress: progress ?? this.progress,
+        supplements: supplements ?? this.supplements,
+        introSeen: introSeen,
+      );
 }
