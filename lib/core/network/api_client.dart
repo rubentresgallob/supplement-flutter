@@ -42,22 +42,17 @@ class ApiClient {
             options.headers['Authorization'] = 'Bearer $token';
           }
           
+          // Solo método y ruta: nunca cabeceras (token), cuerpos (contraseñas) ni respuestas
           _logger.d('➡️ ${options.method} ${options.path}');
-          _logger.d('Headers: ${options.headers}');
-          if (options.data != null) {
-            _logger.d('Body: ${options.data}');
-          }
-          
+
           handler.next(options);
         },
         onResponse: (response, handler) {
           _logger.d('⬅️ ${response.statusCode} ${response.requestOptions.path}');
-          _logger.d('Response: ${response.data}');
           handler.next(response);
         },
         onError: (error, handler) {
-          _logger.e('❌ Error: ${error.message}');
-          _logger.e('Response: ${error.response?.data}');
+          _logger.e('❌ ${error.response?.statusCode ?? error.type.name} ${error.requestOptions.path}');
           handler.next(error);
         },
       ),

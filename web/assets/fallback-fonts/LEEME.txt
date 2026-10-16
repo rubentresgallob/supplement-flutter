@@ -1,0 +1,5 @@
+Fuente de respaldo para emojis en la web: Noto Color Emoji (Google Fonts),
+licencia SIL Open Font License 1.1 (https://openfontlicense.org).
+Se aloja aquí para que la web no pida nada a fonts.gstatic.com.
+Ver web/flutter_bootstrap.js (fontFallbackBaseUrl). Otros alfabetos (chino,
+japonés, coreano...) no están alojados: se verían como un hueco.

@@ -159,11 +159,9 @@ class _FriendsTabState extends State<_FriendsTab> {
             .read<FriendsRemoteDataSource>()
             .sendRequest(identifier);
         if (mounted) {
-          // Con un email el servidor no confirma si existe cuenta (privacidad)
+          // El servidor nunca confirma si la cuenta existe (privacidad)
           _showSnack(
-            identifier.contains('@')
-                ? 'Si hay una cuenta con ese email, recibirá tu solicitud'
-                : 'Solicitud enviada',
+            'Si existe una cuenta con ese dato, le llegará tu solicitud',
             isSuccess: true,
           );
           _load();
