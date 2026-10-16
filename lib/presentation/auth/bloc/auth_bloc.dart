@@ -18,6 +18,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthRegisterEvent>(_onRegister);
     on<AuthLoginEvent>(_onLogin);
     on<AuthLogoutEvent>(_onLogout);
+    on<AuthLegalAcceptedEvent>((event, emit) {
+      final current = state;
+      if (current is AuthAuthenticatedState) {
+        emit(AuthAuthenticatedState(current.user.copyWith(needsLegalAcceptance: false)));
+      }
+    });
   }
   
   /// Verifica si el usuario está autenticado

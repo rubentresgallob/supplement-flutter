@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,7 +6,7 @@ import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/ui/ui.dart';
-import '../../../core/utils/legal_links.dart';
+import '../widgets/legal_consents.dart';
 import 'verify_email_page.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -23,13 +22,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
   bool _obscurePassword = true;
-  bool _acceptedTerms = false;
-
-  // Enlaces del texto de consentimiento
-  late final _termsTap = TapGestureRecognizer()
-    ..onTap = () => openLegalPage(context, LegalPage.terms);
-  late final _privacyTap = TapGestureRecognizer()
-    ..onTap = () => openLegalPage(context, LegalPage.privacy);
+  var _consents = const LegalConsentsValue();
 
   static const _strengthLabels = ['', 'Débil', 'Mejor', 'Buena', 'Fuerte'];
   static const _strengthColors = [
@@ -54,14 +47,12 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _usernameController.dispose();
-    _termsTap.dispose();
-    _privacyTap.dispose();
     super.dispose();
   }
 
   void _onRegisterPressed() {
-    if (!_acceptedTerms) {
-      AppToast.show(context, 'Debes aceptar los términos y la política de privacidad', type: AppToastType.warning);
+    if (!_consents.all) {
+      AppToast.show(context, 'Marca las tres casillas para crear tu cuenta', type: AppToastType.warning);
       return;
     }
     if (_formKey.currentState!.validate()) {
@@ -216,7 +207,11 @@ class _RegisterPageState extends State<RegisterPage> {
           const SizedBox(height: AppSpace.md),
           _buildStrengthBars(),
           const SizedBox(height: AppSpace.lg),
-          _buildTermsToggle(isLoading),
+          LegalConsents(
+            value: _consents,
+            enabled: !isLoading,
+            onChanged: (v) => setState(() => _consents = v),
+          ),
         ],
       ),
     );
@@ -251,59 +246,6 @@ class _RegisterPageState extends State<RegisterPage> {
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildTermsToggle(bool isLoading) {
-    final link = AppText.caption.copyWith(
-      color: AppColors.textPrimary,
-      decoration: TextDecoration.underline,
-      decorationColor: AppColors.borderStrong,
-    );
-    return Semantics(
-      checked: _acceptedTerms,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: isLoading
-            ? null
-            : () => setState(() => _acceptedTerms = !_acceptedTerms),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: SelectionMark(selected: _acceptedTerms, multi: true),
-              ),
-              const SizedBox(width: AppSpace.md),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    style: AppText.caption
-                        .copyWith(color: AppColors.textSecondary),
-                    children: [
-                      const TextSpan(text: 'Acepto los '),
-                      TextSpan(
-                          text: 'Términos', recognizer: _termsTap, style: link),
-                      const TextSpan(text: ' y la '),
-                      TextSpan(
-                          text: 'Política de privacidad',
-                          recognizer: _privacyTap,
-                          style: link),
-                      // RGPD: consentimiento explícito para datos de salud
-                      const TextSpan(
-                        text:
-                            ', y que se traten mis datos sobre los suplementos que tomo para usar la app.',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

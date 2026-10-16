@@ -23,8 +23,10 @@ class AuthRemoteDataSource {
         'email': email,
         'password': password,
         'username': username,
-        // La pantalla de registro no deja continuar sin aceptar (consentimiento RGPD)
+        // La pantalla de registro no deja continuar sin marcar las tres casillas
+        'ageConfirmed': true,
         'acceptTerms': true,
+        'healthConsent': true,
       },
     );
   }
@@ -98,6 +100,15 @@ class AuthRemoteDataSource {
     await _localStorage.saveUserId(user.id);
     await _localStorage.saveUsername(user.username);
     return user;
+  }
+
+  /// Acepta la versión vigente de los Términos y la Política (las tres casillas).
+  Future<void> acceptLegal() async {
+    await _apiClient.post(ApiConstants.acceptLegal, data: {
+      'ageConfirmed': true,
+      'acceptTerms': true,
+      'healthConsent': true,
+    });
   }
 
   /// Todos mis datos en JSON (derecho de portabilidad).

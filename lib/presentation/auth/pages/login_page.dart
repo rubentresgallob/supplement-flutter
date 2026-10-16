@@ -10,6 +10,7 @@ import '../../../core/utils/validators.dart';
 import '../../../core/widgets/mascot/capsu.dart';
 import '../../../core/widgets/ui/ui.dart';
 import 'register_page.dart';
+import '../widgets/legal_consents.dart';
 import 'verify_email_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -143,11 +144,9 @@ class _LoginPageState extends State<LoginPage> {
                         delay: Reveal.step3,
                         child: Column(
                           children: [
-                            _buildDivider(),
-                            const SizedBox(height: AppSpace.lg),
-                            _buildSocialButtons(),
-                            const SizedBox(height: AppSpace.xl),
                             _buildRegisterLink(isLoading),
+                            const SizedBox(height: AppSpace.md),
+                            const LegalFooterLinks(),
                           ],
                         ),
                       ),
@@ -261,41 +260,6 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return const Row(
-      children: [
-        Expanded(child: Divider()),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpace.md),
-          child: Text('O continúa con', style: AppText.micro),
-        ),
-        Expanded(child: Divider()),
-      ],
-    );
-  }
-
-  Widget _buildSocialButtons() {
-    return Row(
-      children: [
-        Expanded(child: _socialButton('Google')),
-        const SizedBox(width: AppSpace.md),
-        Expanded(child: _socialButton('Apple')),
-      ],
-    );
-  }
-
-  Widget _socialButton(String label) {
-    return Container(
-      height: 48,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadii.button),
-        border: Border.all(color: AppColors.borderStrong),
-      ),
-      child: Text(label, style: AppText.button),
     );
   }
 

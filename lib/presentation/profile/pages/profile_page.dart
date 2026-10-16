@@ -6,10 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/widgets/ui/ui.dart';
+import '../widgets/delete_account.dart';
 import '../../../data/datasources/local_storage_datasource.dart';
 import '../../../data/datasources/auth_remote_datasource.dart';
 import '../../../data/datasources/friends_remote_datasource.dart';
-import '../../../core/services/notification_service.dart';
 import '../../../core/utils/legal_links.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
@@ -86,41 +86,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   static const _exportFileName = 'mis-datos-suplementacion.json';
 
-  /// Eliminar cuenta (obligatorio en App Store y Google Play): confirmar + contraseña.
-  Future<void> _deleteAccount() async {
-    final confirmed = await showAppConfirm(
-      context,
-      title: '¿Eliminar tu cuenta?',
-      body:
-          'Se borrarán para siempre tus suplementos, tomas, rachas, amigos, puntos y objetos. '
-          'No se puede deshacer.',
-      confirmLabel: 'Continuar',
-      destructive: true,
-    );
-    if (!confirmed || !mounted) return;
-
-    final password = await showAppPrompt(
-      context,
-      title: 'Confirma con tu contraseña',
-      body: 'Escribe tu contraseña para eliminar la cuenta.',
-      confirmLabel: 'Eliminar cuenta',
-      hint: 'Contraseña',
-      icon: LucideIcons.lock,
-      obscureText: true,
-      destructive: true,
-    );
-    if (password == null || password.isEmpty || !mounted) return;
-
-    try {
-      await context.read<AuthRemoteDataSource>().deleteAccount(password);
-      await NotificationService.cancelAll();
-      if (!mounted) return;
-      AppToast.success(context, 'Tu cuenta se ha eliminado');
-      context.read<AuthBloc>().add(AuthLogoutEvent());
-    } catch (e) {
-      if (mounted) AppToast.error(context, e.toString());
-    }
-  }
+  Future<void> _deleteAccount() => confirmAndDeleteAccount(context);
 
   String _formatDate(DateTime dt) {
     const months = [

@@ -12,6 +12,7 @@ import '../data/datasources/rewards_remote_datasource.dart';
 import '../data/datasources/local_storage_datasource.dart';
 import 'auth/bloc/auth_bloc.dart';
 import 'auth/bloc/auth_state.dart';
+import 'auth/pages/legal_accept_page.dart';
 import 'auth/pages/login_page.dart';
 import 'home/pages/home_page.dart';
 import 'home/bloc/home_bloc.dart';
@@ -82,6 +83,9 @@ class SupplementTrackerApp extends StatelessWidget {
                 return const _SplashScreen();
               }
               if (state is AuthAuthenticatedState) {
+                if (state.user.needsLegalAcceptance) {
+                  return LegalAcceptPage(user: state.user);
+                }
                 return _OnboardingGate(localStorage: localStorage);
               }
               return const LoginPage();

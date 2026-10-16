@@ -43,3 +43,6 @@ class AuthLoginEvent extends AuthEvent {
 
 /// Evento para cerrar sesión
 class AuthLogoutEvent extends AuthEvent {}
+
+/// Ya aceptó la versión vigente de los textos legales (la llamada la hizo la pantalla)
+class AuthLegalAcceptedEvent extends AuthEvent {}

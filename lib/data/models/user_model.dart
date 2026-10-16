@@ -7,6 +7,8 @@ class UserModel extends User {
     required super.email,
     required super.username,
     required super.createdAt,
+    super.needsLegalAcceptance,
+    super.legalChanges,
   });
   
   /// Crea un UserModel desde JSON
@@ -16,6 +18,10 @@ class UserModel extends User {
       email: json['email'] as String,
       username: json['username'] as String,
       createdAt: DateTime.parse((json['created_at'] ?? json['createdAt']) as String),
+      needsLegalAcceptance: json['legal']?['needsAcceptance'] as bool? ?? false,
+      legalChanges: (json['legal']?['changes'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toList(),
     );
   }
   
