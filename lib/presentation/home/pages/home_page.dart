@@ -14,9 +14,6 @@ import '../../auth/bloc/auth_state.dart';
 import '../../friends/pages/friends_page.dart';
 import '../../profile/pages/profile_page.dart';
 import '../../rewards/bloc/rewards_cubit.dart';
-import '../../pro/bloc/pro_cubit.dart';
-import '../../pro/pages/pro_page.dart';
-import '../../../data/datasources/pro_remote_datasource.dart';
 import '../../rewards/pages/shop_page.dart';
 import '../../rewards/widgets/rewards_widgets.dart';
 import '../../../core/widgets/mascot/capsu.dart';
@@ -56,9 +53,6 @@ class _HomePageState extends State<HomePage> {
     context.read<HomeBloc>().add(HomeLoadSupplementsEvent());
 
     // Puntos y tienda: cada premio nuevo lo celebra Capsu con un aviso
-    context.read<ProCubit>()
-      ..reset()
-      ..load();
     final rewards = context.read<RewardsCubit>()
       ..reset()
       ..load();
@@ -610,17 +604,6 @@ class _SupplementsTab extends StatelessWidget {
                   );
                 },
               ),
-              // Pro: suplementos a punto de acabarse
-              if (state.supplements.any((s) => s.isStockLow))
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(AppSpace.screen, 12, AppSpace.screen, 0),
-                    child: _LowStockCard(
-                      supplements:
-                          state.supplements.where((s) => s.isStockLow).toList(),
-                    ),
-                  ),
-                ),
             ],
 
             // States
@@ -974,24 +957,6 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
   TimeOfDay? _notificationTime;
   bool _saving = false;
 
-  // Stock (Pro)
-  late bool _stockEnabled;
-  late final TextEditingController _stockCtrl;
-  late final TextEditingController _unitsPerIntakeCtrl;
-
-  double? _parse(String v) => double.tryParse(v.replaceAll(',', '.'));
-
-  String _fmt(double v) => v % 1 == 0 ? v.toInt().toString() : v.toString();
-
-  /// Días que dura el stock con los valores escritos.
-  int? get _stockDaysPreview {
-    final units = _parse(_stockCtrl.text);
-    final perIntake = _parse(_unitsPerIntakeCtrl.text) ?? 1;
-    final perDay = perIntake * _computedTimesPerDay;
-    if (units == null || perDay <= 0) return null;
-    return (units / perDay).floor();
-  }
-
   bool get _isPillUnit =>
       _dosageUnit == 'cápsulas' || _dosageUnit == 'comprimidos';
 
@@ -1019,11 +984,6 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
     _schedules = List.from(s.schedules);
     _timesPerDay = s.timesPerDay;
     _amountCtrl.addListener(() => setState(() {}));
-    _stockEnabled = s.tracksStock;
-    _stockCtrl = TextEditingController(text: s.stockUnits == null ? '' : _fmt(s.stockUnits!))
-      ..addListener(() => setState(() {}));
-    _unitsPerIntakeCtrl = TextEditingController(text: _fmt(s.unitsPerIntake))
-      ..addListener(() => setState(() {}));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final savedTime =
@@ -1035,19 +995,7 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
   @override
   void dispose() {
     _amountCtrl.dispose();
-    _stockCtrl.dispose();
-    _unitsPerIntakeCtrl.dispose();
     super.dispose();
-  }
-
-  /// Guarda el stock solo si es Pro y ha cambiado algo.
-  Future<void> _saveStock(ProRemoteDataSource proDs, bool isPro) async {
-    if (!isPro) return;
-    final s = widget.supplement;
-    final units = _stockEnabled ? _parse(_stockCtrl.text) : null;
-    final perIntake = _parse(_unitsPerIntakeCtrl.text) ?? 1;
-    if (units == s.stockUnits && perIntake == s.unitsPerIntake) return;
-    await proDs.updateStock(s.id, stockUnits: units, unitsPerIntake: perIntake);
   }
 
   Future<void> _save() async {
@@ -1059,8 +1007,6 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
     setState(() => _saving = true);
     final supplementsDs = context.read<SupplementsRemoteDataSource>();
     final localStorageDs = context.read<LocalStorageDataSource>();
-    final proDs = context.read<ProRemoteDataSource>();
-    final isPro = context.read<ProCubit>().state.isPro;
     final notifTime = _notificationTime;
     final supId = widget.supplement.id;
     final supName = widget.supplement.name;
@@ -1073,7 +1019,6 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
         timesPerDay: _computedTimesPerDay,
         schedules: List.from(_schedules),
       );
-      await _saveStock(proDs, isPro);
       if (notifTime != null) {
         await localStorageDs.saveNotificationTime(supId, notifTime);
         await NotificationService.scheduleReminder(
@@ -1125,88 +1070,6 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
           : isSuccess
               ? AppToastType.success
               : AppToastType.warning,
-    );
-  }
-
-  Widget _buildStockSection() {
-    final isPro = context.watch<ProCubit>().state.isPro;
-    if (!isPro) {
-      return PressableScale(
-        onTap: () => openProPage(context),
-        scale: 0.98,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-              horizontal: AppSpace.lg, vertical: AppSpace.md),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceRaised,
-            borderRadius: BorderRadius.circular(AppRadii.tile),
-          ),
-          child: const Row(children: [
-            Icon(LucideIcons.package, color: AppColors.textMuted, size: 20),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text('Te avisamos antes de que se te acabe',
-                  style: AppText.body),
-            ),
-            Icon(LucideIcons.lock, color: AppColors.textMuted, size: 16),
-          ]),
-        ),
-      );
-    }
-
-    final days = _stockDaysPreview;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        OptionTile(
-          label: 'Controlar lo que me queda',
-          selected: _stockEnabled,
-          multi: true,
-          onTap: () => setState(() => _stockEnabled = !_stockEnabled),
-        ),
-        if (_stockEnabled) ...[
-          const SizedBox(height: AppSpace.md),
-          Row(children: [
-            Expanded(
-              child: TextFormField(
-                controller: _stockCtrl,
-                style: AppText.input,
-                decoration: const InputDecoration(labelText: 'Me quedan (unidades)'),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                validator: (v) => _stockEnabled && _parse(v ?? '') == null ? 'Requerido' : null,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextFormField(
-                controller: _unitsPerIntakeCtrl,
-                style: AppText.input,
-                decoration: const InputDecoration(labelText: 'Gasto por toma'),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                validator: (v) => (_parse(v ?? '') ?? 0) <= 0 ? 'Inválido' : null,
-              ),
-            ),
-          ]),
-          if (days != null) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(LucideIcons.package,
-                    size: 14,
-                    color: days <= 7 ? AppColors.warning : AppColors.textSecondary),
-                const SizedBox(width: AppSpace.sm),
-                Text(
-                  'Te dura unos $days días',
-                  style: AppText.label.copyWith(
-                      color: days <= 7
-                          ? AppColors.warning
-                          : AppColors.textSecondary),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ],
     );
   }
 
@@ -1400,17 +1263,6 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
                   ]),
                 ),
               ),
-              const SizedBox(height: 20),
-
-              const Row(
-                children: [
-                  _SectionLabel('Control de stock'),
-                  SizedBox(width: 6),
-                  ProBadge(),
-                ],
-              ),
-              const SizedBox(height: 8),
-              _buildStockSection(),
               const SizedBox(height: 28),
 
               AppButton(
@@ -1423,54 +1275,6 @@ class _EditSupplementSheetState extends State<_EditSupplementSheet> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// Aviso de stock bajo (Pro): "Se te acaba la creatina en 3 días".
-class _LowStockCard extends StatelessWidget {
-  final List<UserSupplement> supplements;
-  const _LowStockCard({required this.supplements});
-
-  String _line(UserSupplement s) {
-    final days = s.stockDaysLeft ?? 0;
-    if (days == 0) return '${s.name}: se ha acabado';
-    return '${s.name}: quedan $days ${days == 1 ? 'día' : 'días'}';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpace.lg),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const IconChip(icon: LucideIcons.package, color: AppColors.warning),
-          const SizedBox(width: AppSpace.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Toca reponer',
-                  style: AppText.navTitle,
-                ),
-                const SizedBox(height: 4),
-                for (final s in supplements)
-                  Text(
-                    _line(s),
-                    style: AppText.body,
-                  ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

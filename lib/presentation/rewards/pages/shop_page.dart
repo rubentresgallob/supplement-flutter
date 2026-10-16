@@ -7,8 +7,6 @@ import '../../../data/datasources/rewards_remote_datasource.dart';
 import '../../../data/models/rewards_models.dart';
 import '../bloc/rewards_cubit.dart';
 import '../widgets/rewards_widgets.dart';
-import '../../pro/bloc/pro_cubit.dart';
-import '../../pro/pages/pro_page.dart';
 
 /// Tienda: probador de Capsu, objetivos semanales, objetos y logros.
 class ShopPage extends StatefulWidget {
@@ -25,7 +23,6 @@ class _ShopPageState extends State<ShopPage> {
     ('medal', 'Medallas', LucideIcons.medal),
     ('banner', 'Banners', LucideIcons.image),
     ('consumable', 'Protectores', LucideIcons.shield),
-    ('pro', 'Pro', LucideIcons.crown),
   ];
 
   String _filter = 'all';
@@ -86,7 +83,7 @@ class _ShopPageState extends State<ShopPage> {
             final items = state.items
                 .where((i) =>
                     _filter == 'all' ||
-                    (_filter == 'pro' ? i.proOnly : i.category == _filter))
+                    i.category == _filter)
                 .toList();
 
             return RefreshIndicator(
@@ -444,7 +441,6 @@ class _ItemCard extends StatelessWidget {
                       style: AppText.micro.copyWith(color: color),
                     ),
                   ),
-                  if (item.proOnly) const ProBadge(),
                 ],
               ),
               Expanded(
@@ -523,10 +519,6 @@ class _ItemSheet extends StatelessWidget {
           variant = item.equipped ? AppButtonVariant.outline : AppButtonVariant.primary;
           onPressed = () => _run(context, () => cubit.toggleEquip(item),
               item.equipped ? 'Objeto quitado' : 'Equipado');
-        } else if (item.proOnly && !context.watch<ProCubit>().state.isPro) {
-          label = 'Hazte Pro para conseguirlo';
-          onPressed = () => openProPage(context);
-          hint = 'Objeto exclusivo del plan Pro.';
         } else if (item.exclusive) {
           label = 'Se consigue con un logro';
           hint = 'Mira la sección de logros de la tienda.';

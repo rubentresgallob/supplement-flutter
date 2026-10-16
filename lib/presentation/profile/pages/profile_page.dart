@@ -18,7 +18,6 @@ import '../../home/bloc/home_bloc.dart';
 import '../../home/bloc/home_state.dart';
 import '../../onboarding/pages/onboarding_page.dart';
 import '../../rewards/bloc/rewards_cubit.dart';
-import '../../pro/widgets/pro_profile_section.dart';
 import '../../../core/widgets/mascot/capsu.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -94,7 +93,7 @@ class _ProfilePageState extends State<ProfilePage> {
       title: '¿Eliminar tu cuenta?',
       body:
           'Se borrarán para siempre tus suplementos, tomas, rachas, amigos, puntos y objetos. '
-          'No se puede deshacer.\n\nSi tienes Pro, cancela también la suscripción en tu tienda de apps.',
+          'No se puede deshacer.',
       confirmLabel: 'Continuar',
       destructive: true,
     );
@@ -331,16 +330,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-            // Plan Pro + estadísticas
-            const SliverToBoxAdapter(
-              child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: AppSpace.screen),
-                  child: ProProfileSection(),
-                ),
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 20)),

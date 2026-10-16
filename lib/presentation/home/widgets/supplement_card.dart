@@ -120,10 +120,6 @@ class _SupplementCardState extends State<SupplementCard> {
                             overflow: TextOverflow.ellipsis,
                             style: AppText.caption,
                           ),
-                          if (s.stockDaysLeft != null) ...[
-                            const SizedBox(height: AppSpace.xs),
-                            _buildStockLabel(s.stockDaysLeft!),
-                          ],
                         ],
                       ),
                     ),
@@ -178,23 +174,6 @@ class _SupplementCardState extends State<SupplementCard> {
             ),
         ],
       ),
-    );
-  }
-
-  /// Pro: días que quedan de stock (en ámbar si queda una semana o menos).
-  Widget _buildStockLabel(int days) {
-    final color =
-        widget.supplement.isStockLow ? AppColors.warning : AppColors.textMuted;
-    final text = days == 0
-        ? 'Se ha acabado'
-        : 'Quedan $days ${days == 1 ? 'día' : 'días'}';
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(LucideIcons.package, size: 12, color: color),
-        const SizedBox(width: AppSpace.xs),
-        Text(text, style: AppText.micro.copyWith(color: color)),
-      ],
     );
   }
 

@@ -14,8 +14,6 @@ class UserSupplementModel extends UserSupplement {
     required super.schedules,
     required super.active,
     required super.createdAt,
-    super.stockUnits,
-    super.unitsPerIntake,
   });
   
   /// Crea un UserSupplementModel desde JSON
@@ -37,8 +35,6 @@ class UserSupplementModel extends UserSupplement {
           .toList(),
       active: json['active'] as bool,
       createdAt: DateTime.parse((json['created_at'] ?? json['createdAt']) as String),
-      stockUnits: (json['stock_units'] as num?)?.toDouble(),
-      unitsPerIntake: (json['units_per_intake'] as num?)?.toDouble() ?? 1,
     );
   }
   

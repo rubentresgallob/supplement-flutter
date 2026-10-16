@@ -159,9 +159,6 @@ class ApiClient {
     if (statusCode == 403 && data is Map && data['code'] == 'EMAIL_NOT_VERIFIED') {
       return EmailNotVerifiedException(message);
     }
-    if (statusCode == 403 && data is Map && data['code'] == 'PRO_REQUIRED') {
-      return ProRequiredException(message);
-    }
 
     switch (statusCode) {
       case 400:

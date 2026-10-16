@@ -98,7 +98,7 @@ class GlassCard extends StatelessWidget {
 }
 
 /// Fondo negro con halos radiales muy tenues. Para pantallas de flujo
-/// (onboarding, acceso, Pro, tienda); en listas densas, negro liso.
+/// (onboarding, acceso, tienda); en listas densas, negro liso.
 class AmbientBackground extends StatelessWidget {
   const AmbientBackground({super.key, required this.child});
   final Widget child;

@@ -53,7 +53,6 @@ MedalArt shopMedalArt(
     'medal_streak_30' => (RewardMetal.rose, MedalShape.flame, '30'),
     'medal_streak_100' => (RewardMetal.mint, MedalShape.hexagon, '100'),
     'medal_streak_365' => (RewardMetal.gold, MedalShape.crown, null),
-    'medal_pro_diamond' => (RewardMetal.prism, MedalShape.gem, null),
     _ => (
         switch (item.rarity) {
           'rare' => RewardMetal.silver,
@@ -117,7 +116,6 @@ BannerScene bannerScene(ShopItem item) => switch (item.code) {
       'banner_ocean' => BannerScene.ocean,
       'banner_forest' => BannerScene.forest,
       'banner_galaxy' => BannerScene.galaxy,
-      'banner_aurora' => BannerScene.aurora,
       _ => BannerScene.plain,
     };
 
@@ -164,12 +162,10 @@ class ShopRender extends StatelessWidget {
     'medal_streak_30',
     'medal_streak_100',
     'medal_streak_365',
-    'medal_pro_diamond',
     'banner_sunrise',
     'banner_ocean',
     'banner_forest',
     'banner_galaxy',
-    'banner_aurora',
   };
 
   /// Ruta del render de [code] (los banners no llevan transparencia: JPG).
