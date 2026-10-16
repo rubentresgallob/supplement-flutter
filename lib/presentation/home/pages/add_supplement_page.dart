@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/health_disclaimer.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/datasources/supplements_remote_datasource.dart';
@@ -60,7 +61,6 @@ class _AddSupplementPageState extends State<AddSupplementPage> {
     String? supplementDatabaseId,
     required String name,
     required List<String> availableForms,
-    String typicalDosage = '',
     bool isCustom = false,
   }) async {
     final saved = await showModalBottomSheet<bool>(
@@ -71,7 +71,6 @@ class _AddSupplementPageState extends State<AddSupplementPage> {
         supplementDatabaseId: supplementDatabaseId,
         name: name,
         availableForms: availableForms,
-        typicalDosage: typicalDosage,
         isCustom: isCustom,
       ),
     );
@@ -109,6 +108,10 @@ class _AddSupplementPageState extends State<AddSupplementPage> {
                     : null,
               ),
             ),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(AppSpace.screen, AppSpace.sm, AppSpace.screen, AppSpace.xs),
+            child: AppAlert(message: kHealthDisclaimer),
           ),
           Expanded(child: _buildBody()),
         ],
@@ -168,7 +171,6 @@ class _AddSupplementPageState extends State<AddSupplementPage> {
                 supplementDatabaseId: s.id,
                 name: s.name,
                 availableForms: s.forms,
-                typicalDosage: s.typicalDosage,
               ),
             )),
         const SizedBox(height: 8),
@@ -242,7 +244,7 @@ class _CatalogTile extends StatelessWidget {
                       style: AppText.label),
                   const SizedBox(height: 2),
                   Text(
-                    '${supplement.category} · ${supplement.typicalDosage}',
+                    supplement.category,
                     style: AppText.caption.copyWith(color: AppColors.textSecondary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -278,14 +280,12 @@ class _ConfigureSheet extends StatefulWidget {
   final String? supplementDatabaseId;
   final String name;
   final List<String> availableForms;
-  final String typicalDosage;
   final bool isCustom;
 
   const _ConfigureSheet({
     this.supplementDatabaseId,
     required this.name,
     required this.availableForms,
-    required this.typicalDosage,
     required this.isCustom,
   });
 
@@ -304,7 +304,8 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
 
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
-  final _amountCtrl = TextEditingController(text: '1');
+  // Vacío a propósito: la app no propone dosis
+  final _amountCtrl = TextEditingController();
   String? _selectedForm;
   String _dosageUnit = 'mg';
   final List<String> _schedules = [];
@@ -329,18 +330,8 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
     super.initState();
     _nameCtrl.text = widget.name;
     if (widget.availableForms.isNotEmpty) _selectedForm = widget.availableForms.first;
-    _parseDosage(widget.typicalDosage);
     // Rebuild cuando cambia la cantidad (para actualizar el contador de tomas en modo píldora)
     _amountCtrl.addListener(() => setState(() {}));
-  }
-
-  void _parseDosage(String d) {
-    final m = RegExp(r'(\d+\.?\d*)').firstMatch(d);
-    if (m != null) _amountCtrl.text = m.group(1)!;
-    if (d.contains('µg')) _dosageUnit = 'µg';
-    else if (d.contains(' g') || d.startsWith('g')) _dosageUnit = 'g';
-    else if (d.contains('UI')) _dosageUnit = 'UI';
-    else if (d.contains('ml')) _dosageUnit = 'ml';
   }
 
   @override
@@ -442,6 +433,9 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
               ),
               const SizedBox(height: 24),
 
+              const AppAlert(message: kHealthDisclaimer),
+              const SizedBox(height: 16),
+
               if (widget.isCustom) ...[
                 TextFormField(
                   controller: _nameCtrl,
@@ -501,6 +495,8 @@ class _ConfigureSheetState extends State<_ConfigureSheet> {
                   ),
                 ],
               ),
+              const SizedBox(height: AppSpace.sm),
+              const Text(kDoseHelp, style: AppText.micro),
               const SizedBox(height: 20),
 
               const _SectionLabel('Horarios'),

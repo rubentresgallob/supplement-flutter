@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/constants/health_disclaimer.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/widgets/mascot/capsu.dart';
@@ -39,9 +40,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
     ),
     _Step(
       CapsuMood.idle,
-      'Toca el círculo',
+      'Un toque y listo',
       'Registra cada toma',
-      'Toca el círculo de cada suplemento al tomarlo. Si lo tomas varias veces al día, cada toque suma.',
+      'Pulsa «Registrar toma» en cada suplemento al tomarlo. Si lo tomas varias veces al día, cada toma suma.',
     ),
     _Step(
       CapsuMood.celebrate,
@@ -183,7 +184,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       _reaction = null;
                     }),
                     children: [
-                      _StepView(step: _steps[0], illustration: const _FeaturesDemo()),
+                      _StepView(
+                        step: _steps[0],
+                        illustration: const _FeaturesDemo(),
+                        footer: const AppAlert(message: kHealthDisclaimer),
+                      ),
                       _StepView(
                         step: _steps[1],
                         illustration: _AddDemo(
@@ -230,7 +235,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
 class _StepView extends StatelessWidget {
   final _Step step;
   final Widget illustration;
-  const _StepView({required this.step, required this.illustration});
+  final Widget? footer;
+  const _StepView({required this.step, required this.illustration, this.footer});
 
   @override
   Widget build(BuildContext context) {
@@ -243,6 +249,10 @@ class _StepView extends StatelessWidget {
           Text(step.description, textAlign: TextAlign.center, style: AppText.body),
           const SizedBox(height: AppSpace.xl),
           illustration,
+          if (footer != null) ...[
+            const SizedBox(height: AppSpace.lg),
+            footer!,
+          ],
         ],
       ),
     );
