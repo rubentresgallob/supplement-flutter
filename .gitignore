@@ -25,3 +25,8 @@ migrate_working_dir/
 
 # Firebase Hosting (caché local)
 .firebase/
+
+# IDE y herramientas locales (NO subir)
+.idea/
+*.iml
+.netlify/
