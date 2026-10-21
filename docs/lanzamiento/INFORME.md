@@ -153,13 +153,16 @@ Crea la cuenta antes del envío (ver §5) y pega esto en «Notas de revisión» 
    copy /Y docs\legal\politica-privacidad.html ..\..\supplement_backend\nodejs_space\public\privacidad.html
    copy /Y docs\legal\terminos.html ..\..\supplement_backend\nodejs_space\public\terminos.html
    ```
-3. **Migración en producción** (solo añade columnas y tablas), **antes** de desplegar el servidor:
+3. **Línea base de las migraciones en producción** (UNA sola vez, antes del primer despliegue con migraciones).
+   Le dice a Prisma que la BD de producción ya tiene `0_init`; no cambia ninguna tabla:
    ```cmd
    cd C:\Users\Usuario\Desktop\App_Suplementaci_n_Flutter\supplement_backend\nodejs_space
-   npx prisma db execute --file prisma/migraciones-manuales/2026-10-16_lanzamiento.sql --schema prisma/schema.prisma
-   npx prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script
+   npx prisma migrate resolve --applied 0_init
+   npx prisma migrate status
    ```
-   El segundo comando tiene que salir vacío. Los usuarios existentes quedan con los dos interruptores apagados.
+   `status` debe decir que falta solo `20261016000000_lanzamiento_gratuito` (solo añade columnas y tablas).
+   Esa se aplica sola al desplegar (`render.yaml`: `prisma migrate deploy`). Si prefieres aplicarla a mano antes:
+   `npx prisma migrate deploy`. Los usuarios existentes quedan con los dos interruptores apagados.
 4. **Variables de Render** (Environment):
    - `PRO_ENABLED=false` y borrar `PRO_TEST_MODE`.
    - `ADMIN_EMAIL=[EMAIL DE CONTACTO]`.
